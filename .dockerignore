@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Sessions et uploads (données temporaires)
+sessions/*
+uploads/*
+!sessions/.gitkeep
+!uploads/.gitkeep
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Documentation de développement
+AMELIORATIONS_*.md
+BACKEND_MODIFICATIONS_*.md
+CORRECTIFS.md
+DESIGN_OVERHAUL.md
+FRONTEND_MODIFICATIONS_*.md
+FUZZY_MATCHING_COC.md
+GUIDE_TEST_COMPLET.md
+MODE_*.md
+PHASE2_COMPLETE.md
+PLAN_*.md
+RECOMMENDATIONS.md
+SECURITY_IMPROVEMENTS.md
+SUIVI_DEVELOPPEMENT.md
+TEST_*.md
+TESTING_GUIDE.md
+TROUBLESHOOTING.md
+
+# Fichiers de test
+test_*.json
+test_*.py
+verify_*.py
+create_test_file.py
+dataValueSets_*.csv
+
+# Fichiers temporaires
+nul
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# Environnement
+.env
+.env.local

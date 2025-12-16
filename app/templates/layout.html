@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block body %}
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-screen-xl mx-auto px-6 h-16 flex items-center justify-between">
+        <!-- Logo/Brand -->
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                <i class="fas fa-database text-white text-sm"></i>
+            </div>
+            <span class="text-xl font-bold text-gray-900 tracking-tight">DSI DataManager</span>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center gap-3">
+            <div class="text-right hidden sm:block">
+                <p class="text-sm font-semibold text-gray-900">Amadou Roufai</p>
+                <p class="text-xs text-gray-500">Ingénieur Logiciel</p>
+            </div>
+            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200">
+                <i class="fas fa-user text-gray-500"></i>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="nav-container">
+        <a href="{{ url_for('main.index') }}"
+            class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+            <i class="fas fa-home"></i>
+            Accueil
+        </a>
+        <a href="{{ url_for('configuration.configuration_page') }}"
+            class="nav-link {% if 'configuration' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-cog"></i>
+            Configuration
+        </a>
+        <a href="{{ url_for('generator.generator_page') }}"
+            class="nav-link {% if 'generator' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-file-excel"></i>
+            Générateur
+        </a>
+        <a href="{{ url_for('calculator.calculator_page') }}"
+            class="nav-link {% if 'calculator' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-calculator"></i>
+            Calculateur
+        </a>
+        <a href="{{ url_for('main.about') }}"
+            class="nav-link {% if request.endpoint == 'main.about' %}active{% endif %}">
+            <i class="fas fa-info-circle"></i>
+            À propos
+        </a>
+    </div>
+</nav>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="max-w-screen-xl mx-auto px-6 py-4">
+    {% for category, message in messages %}
+    <div
+        class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'warning' if category == 'warning' else 'info' }} fade-in">
+        <i
+            class="fas {% if category == 'error' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% elif category == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} text-xl mr-3"></i>
+        <span class="font-medium">{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Main Content -->
+<main class="min-h-screen">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-content">
+        <div class="flex items-center gap-4">
+            {% if has_metadata %}
+            <div class="footer-status active">
+                <i class="fas fa-check-circle"></i>
+                <span>Métadonnées synchronisées</span>
+            </div>
+            {% else %}
+            <div class="footer-status inactive">
+                <i class="fas fa-info-circle"></i>
+                <span>Non connecté</span>
+            </div>
+            {% endif %}
+            <div class="text-sm">
+                <i class="fas fa-code mr-2"></i>
+                v5.1 Web Edition
+            </div>
+        </div>
+        <div class="text-sm">
+            <p>&copy; 2024 DSI du MESRIT</p>
+        </div>
+    </div>
+</footer>
+{% endblock %}

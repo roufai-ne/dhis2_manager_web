@@ -1,0 +1,84 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Flask
+instance/
+.webassets-cache
+
+# Sessions
+sessions/
+*.session
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+logs/*
+!logs/.gitkeep
+
+# Testing
+.pytest_cache/
+test_*.json
+test_*.csv
+test_*.py
+verify_*.py
+
+# Temporary files
+nul
+*.tmp
+*.bak
+*~
+
+# Data files
+dataValueSets_*.csv
+effectif_etudiant.json
+metadata.json
+dataset.json
+
+# Documentation de développement (optionnel)
+# Décommenter si vous ne voulez pas les versionner
+# AMELIORATIONS_*.md
+# BACKEND_MODIFICATIONS_*.md
+# CORRECTIFS.md
+# DESIGN_OVERHAUL.md
+# FRONTEND_MODIFICATIONS_*.md
+# MODE_*.md
+# PHASE2_COMPLETE.md
+# PLAN_*.md
+# RECOMMENDATIONS.md
+# SUIVI_DEVELOPPEMENT.md
+# TEST_*.md
+# TESTING_GUIDE.md
+.coverage
+htmlcov/

@@ -1,0 +1,359 @@
+{% extends "layout.html" %}
+
+{% block title %}Accueil - DSI DataManager{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-6 py-12 fade-in">
+
+    <!-- Hero Section -->
+    <div class="mb-16 text-center">
+        <h1 class="text-5xl font-extrabold text-gray-900 mb-4">
+            DSI DataManager
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            Plateforme de gestion et de transformation de données statistiques
+        </p>
+    </div>
+
+    <!-- Metadata Status -->
+    {% if has_metadata %}
+    <div class="card mb-12 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <div class="w-16 h-16 bg-green-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-check-circle text-white text-3xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-3">Métadonnées synchronisées</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-lg p-3 border border-green-200">
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Source</p>
+                            <p class="font-bold text-gray-900 text-sm truncate">{{ metadata_info.filename }}</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-3 border border-green-200">
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Organisations</p>
+                            <p class="font-bold text-gray-900 text-xl">{{ metadata_info.org_units }}</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-3 border border-green-200">
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Datasets</p>
+                            <p class="font-bold text-gray-900 text-xl">{{ metadata_info.data_sets }}</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-3 border border-green-200">
+                            <p class="text-xs text-gray-500 font-semibold uppercase mb-1">Éléments</p>
+                            <p class="font-bold text-gray-900 text-xl">{{ metadata_info.data_elements }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <a href="{{ url_for('configuration.configuration_page') }}" class="btn btn-secondary flex-shrink-0">
+                <i class="fas fa-cog mr-2"></i>Configurer
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="card mb-12 bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
+        <div class="flex items-center gap-6">
+            <div class="w-16 h-16 bg-yellow-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-white text-3xl"></i>
+            </div>
+            <div class="flex-1">
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Non connecté</h2>
+                <p class="text-gray-600 mb-3">Connectez-vous à l'API DHIS2 pour synchroniser les métadonnées</p>
+                <a href="{{ url_for('configuration.configuration_page') }}" class="btn btn-primary">
+                    <i class="fas fa-plug mr-2"></i>Connexion API
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Session Files -->
+    {% if session_info.has_excel or session_info.has_json %}
+    <div class="card mb-12 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-folder-open text-white"></i>
+                </div>
+                Fichiers en session
+            </h3>
+            <button id="clear-session-btn"
+                class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center transition-colors">
+                <i class="fas fa-trash-alt mr-2"></i>
+                Tout effacer
+            </button>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            {% if session_info.has_excel %}
+            <div class="bg-white px-5 py-3 rounded-lg border border-blue-200 flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-excel text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Excel File</p>
+                    <p class="font-bold text-gray-900 text-sm">{{ session_info.excel_filename }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if session_info.has_json %}
+            <div class="bg-white px-5 py-3 rounded-lg border border-blue-200 flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-code text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold uppercase">JSON Payload</p>
+                    <p class="font-bold text-gray-900 text-sm">{{ session_info.json_filename }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Modules Section -->
+    <div class="mb-12">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Modules disponibles</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Configuration Module -->
+            <a href="{{ url_for('configuration.configuration_page') }}" class="card group">
+                <div
+                    class="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                    <i class="fas fa-cog text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Configuration</h3>
+                <p class="text-gray-600 mb-4">
+                    Connexion API et synchronisation des métadonnées
+                </p>
+                <span class="badge badge-primary">
+                    <i class="fas fa-check mr-1"></i>
+                    Toujours disponible
+                </span>
+            </a>
+
+            <!-- Generator Module -->
+            {% if has_metadata %}
+            <a href="{{ url_for('generator.generator_page') }}" class="card group">
+                <div
+                    class="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                    <i class="fas fa-file-excel text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Générateur</h3>
+                <p class="text-gray-600 mb-4">
+                    Créez des templates Excel pour la saisie de données
+                </p>
+                <span class="badge badge-success">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Prêt
+                </span>
+            </a>
+            {% else %}
+            <div class="card-flat opacity-60">
+                <div class="w-14 h-14 bg-gray-400 rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-file-excel text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Générateur</h3>
+                <p class="text-gray-600 mb-4">
+                    Créez des templates Excel pour la saisie de données
+                </p>
+                <span class="badge badge-gray">
+                    <i class="fas fa-lock mr-1"></i>
+                    Métadonnées requises
+                </span>
+            </div>
+            {% endif %}
+
+            <!-- Calculator Module -->
+            {% if has_metadata %}
+            <a href="{{ url_for('calculator.calculator_page') }}" class="card group">
+                <div
+                    class="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                    <i class="fas fa-calculator text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Calculateur</h3>
+                <p class="text-gray-600 mb-4">
+                    Convertissez vos données Excel en payload DHIS2
+                </p>
+                <span class="badge badge-primary">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Prêt
+                </span>
+            </a>
+            {% else %}
+            <div class="card-flat opacity-60">
+                <div class="w-14 h-14 bg-gray-400 rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-calculator text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Calculateur</h3>
+                <p class="text-gray-600 mb-4">
+                    Convertissez vos données Excel en payload DHIS2
+                </p>
+                <span class="badge badge-gray">
+                    <i class="fas fa-lock mr-1"></i>
+                    Métadonnées requises
+                </span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Workflow & Features Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Workflow -->
+        <div class="card">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-route text-white"></i>
+                </div>
+                Workflow recommandé
+            </h3>
+
+            <div class="space-y-4">
+                <div class="flex gap-4">
+                    <div
+                        class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                        1</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Connexion</h4>
+                        <p class="text-sm text-gray-600">Connectez-vous à l'API pour récupérer les métadonnées</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div
+                        class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                        2</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Génération</h4>
+                        <p class="text-sm text-gray-600">Créez un template Excel avec les organisations et datasets</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div
+                        class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                        3</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Saisie</h4>
+                        <p class="text-sm text-gray-600">Remplissez les valeurs dans le fichier Excel généré</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div
+                        class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                        4</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Calcul</h4>
+                        <p class="text-sm text-gray-600">Importez l'Excel rempli pour générer le payload JSON</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div
+                        class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                        5</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Import DHIS2</h4>
+                        <p class="text-sm text-gray-600">Utilisez le JSON généré dans DHIS2 Import/Export</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="card">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-star text-white"></i>
+                </div>
+                Fonctionnalités clés
+            </h3>
+
+            <div class="space-y-4">
+                <div class="flex gap-3">
+                    <i class="fas fa-check-circle text-green-600 text-lg flex-shrink-0"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Templates pré-formatés</h4>
+                        <p class="text-sm text-gray-600">Excel avec validation automatique et colonnes techniques</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <i class="fas fa-check-circle text-green-600 text-lg flex-shrink-0"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Arborescence hiérarchique</h4>
+                        <p class="text-sm text-gray-600">Sélection intuitive des unités d'organisation</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <i class="fas fa-check-circle text-green-600 text-lg flex-shrink-0"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Validation complète</h4>
+                        <p class="text-sm text-gray-600">Vérification des données avant génération du payload</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <i class="fas fa-check-circle text-green-600 text-lg flex-shrink-0"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Statistiques détaillées</h4>
+                        <p class="text-sm text-gray-600">Rapport complet avec taux d'erreur et preview</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <i class="fas fa-check-circle text-green-600 text-lg flex-shrink-0"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Session sécurisée</h4>
+                        <p class="text-sm text-gray-600">Données temporaires avec nettoyage automatique</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Version Info -->
+    <div class="mt-12 text-center">
+        <p class="text-sm text-gray-500">
+            DSI DataManager v5.1
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const clearBtn = document.getElementById('clear-session-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', async function () {
+                NotificationManager.warning('Effacement des fichiers de session en cours...', 'Confirmation');
+                
+                setTimeout(() => {
+                    LoadingOverlay.show('Nettoyage de la session...');
+                try {
+                    const response = await fetch("{{ url_for('configuration.clear_session_files') }}", {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        NotificationManager.success('Session nettoyée');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        NotificationManager.error('Erreur: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    NotificationManager.error('Erreur réseau');
+                } finally {
+                    LoadingOverlay.hide();
+                }
+                }, 500);
+            });
+        }
+    });
+</script>
+{% endblock %}

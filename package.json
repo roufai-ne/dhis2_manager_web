@@ -1,0 +1,20 @@
+{
+  "name": "dhis2-manager-web",
+  "version": "5.0.0",
+  "description": "DHIS2 Data Manager Web Edition",
+  "scripts": {
+    "build:css": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/tailwind.output.css",
+    "watch:css": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/tailwind.output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10"
+  },
+  "dependencies": {
+    "alpinejs": "^3.13.3",
+    "dropzone": "^6.0.0-beta.2",
+    "jstree": "^3.3.16",
+    "jquery": "^3.7.1"
+  }
+}

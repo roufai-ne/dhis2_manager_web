@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+
+{% block title %}À propos - DSI DataManager{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-6 py-12 fade-in">
+    <!-- Header -->
+    <div class="mb-12 text-center">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
+            À propos
+        </h1>
+        <p class="text-lg text-gray-600">
+            Information sur la plateforme
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <!-- Version -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-code-branch text-3xl text-blue-500 mr-4"></i>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Version</h3>
+                    <p class="text-2xl font-bold text-blue-600">5.1</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600">Web Edition</p>
+        </div>
+
+        <!-- Développeur -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-user-tie text-3xl text-green-500 mr-4"></i>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Développeur</h3>
+                    <p class="text-xl font-semibold text-gray-700">Amadou Roufai</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600">Ingénieur Logiciel</p>
+        </div>
+
+        <!-- Technologies -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-layer-group text-3xl text-purple-500 mr-4"></i>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Stack</h3>
+                    <p class="text-sm text-gray-700">Flask • Python • Tailwind</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600">Architecture moderne</p>
+        </div>
+    </div>
+
+    <!-- Description -->
+    <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-info-circle mr-2"></i>Description
+        </h2>
+        <div class="prose max-w-none text-gray-700 space-y-4">
+            <p>
+                Cette plateforme est conçue pour la <strong>DSI du MESRIT</strong> afin de faciliter la collecte,
+                la transformation et l'intégration des données statistiques dans le système d'information national.
+            </p>
+            <p>
+                Elle permet aux gestionnaires de données de générer des templates de collecte standardisés,
+                de valider les données saisies et de préparer les imports automatiques vers le serveur central DHIS2.
+            </p>
+        </div>
+    </div>
+
+    <!-- Fonctionnalités principales -->
+    <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-list-check mr-2"></i>Fonctionnalités Principales
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Module Configuration -->
+            <div class="border-l-4 border-blue-500 pl-4">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">
+                    <i class="fas fa-cog text-blue-500 mr-2"></i>Configuration
+                </h3>
+                <ul class="space-y-2 text-gray-700">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Connexion API directe</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Synchronisation des métadonnées</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Module Générateur -->
+            <div class="border-l-4 border-green-500 pl-4">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">
+                    <i class="fas fa-file-excel text-green-500 mr-2"></i>Générateur
+                </h3>
+                <ul class="space-y-2 text-gray-700">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Templates Excel standardisés</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Filtrage par Groupe et Niveau</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Module Calculateur -->
+            <div class="border-l-4 border-purple-500 pl-4">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">
+                    <i class="fas fa-calculator text-purple-500 mr-2"></i>Calculateur
+                </h3>
+                <ul class="space-y-2 text-gray-700">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Validation des données</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Génération de payload JSON</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support et Contact -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-headset mr-2"></i>Support
+        </h2>
+        <div class="prose max-w-none text-gray-700">
+            <p class="mb-4">
+                Pour toute assistance technique, veuillez contacter la Direction des Systèmes d'Information (DSI).
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

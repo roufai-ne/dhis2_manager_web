@@ -1,0 +1,323 @@
+{% extends "layout.html" %}
+
+{% block title %}Aide - DHIS2 Manager{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Centre d'Aide</h1>
+        <p class="text-gray-600">Documentation et guides d'utilisation</p>
+    </div>
+    
+    <!-- Guide rapide -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-lg p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-4">
+            <i class="fas fa-rocket mr-2"></i>Guide de Démarrage Rapide
+        </h2>
+        <p class="mb-6 text-blue-100">
+            Suivez ces étapes simples pour transformer vos données Excel en payload DHIS2
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+                <div class="text-3xl font-bold mb-2">1</div>
+                <h4 class="font-semibold mb-1">Configuration</h4>
+                <p class="text-sm text-blue-100">Importez vos métadonnées DHIS2</p>
+            </div>
+            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+                <div class="text-3xl font-bold mb-2">2</div>
+                <h4 class="font-semibold mb-1">Génération</h4>
+                <p class="text-sm text-blue-100">Créez un template Excel</p>
+            </div>
+            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+                <div class="text-3xl font-bold mb-2">3</div>
+                <h4 class="font-semibold mb-1">Saisie</h4>
+                <p class="text-sm text-blue-100">Remplissez vos données</p>
+            </div>
+            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+                <div class="text-3xl font-bold mb-2">4</div>
+                <h4 class="font-semibold mb-1">Calcul</h4>
+                <p class="text-sm text-blue-100">Générez le JSON DHIS2</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAQ Accordion -->
+    <div class="bg-white rounded-lg shadow-md mb-8">
+        <div class="p-6 border-b">
+            <h2 class="text-2xl font-bold text-gray-800">
+                <i class="fas fa-question-circle mr-2"></i>Questions Fréquentes
+            </h2>
+        </div>
+        
+        <div class="divide-y">
+            <!-- FAQ 1 -->
+            <div class="faq-item">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <span class="font-semibold text-gray-800">Comment obtenir les métadonnées DHIS2 ?</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </button>
+                <div class="faq-answer hidden p-6 bg-gray-50 text-gray-700">
+                    <p class="mb-3">Pour obtenir les métadonnées de votre instance DHIS2 :</p>
+                    <ol class="list-decimal ml-6 space-y-2">
+                        <li>Connectez-vous à votre instance DHIS2</li>
+                        <li>Allez dans <strong>Import/Export</strong> → <strong>Metadata Export</strong></li>
+                        <li>Sélectionnez les types de métadonnées nécessaires :
+                            <ul class="list-disc ml-6 mt-2">
+                                <li>Organisation Units</li>
+                                <li>Data Sets</li>
+                                <li>Data Elements</li>
+                                <li>Category Option Combos</li>
+                            </ul>
+                        </li>
+                        <li>Cliquez sur <strong>Export</strong> pour télécharger le fichier JSON</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <!-- FAQ 2 -->
+            <div class="faq-item">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <span class="font-semibold text-gray-800">Quels formats de période sont supportés ?</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </button>
+                <div class="faq-answer hidden p-6 bg-gray-50 text-gray-700">
+                    <p class="mb-3">L'application supporte tous les formats de période DHIS2 :</p>
+                    <ul class="space-y-2">
+                        <li><strong>Daily:</strong> 2024-01-15</li>
+                        <li><strong>Weekly:</strong> 2024W3 (3ème semaine de 2024)</li>
+                        <li><strong>Monthly:</strong> 202401 (Janvier 2024)</li>
+                        <li><strong>Quarterly:</strong> 2024Q1 (1er trimestre 2024)</li>
+                        <li><strong>Yearly:</strong> 2024</li>
+                        <li><strong>Financial Year:</strong> 2024April (début avril)</li>
+                    </ul>
+                    <p class="mt-3 text-sm text-gray-600">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Des exemples de format sont affichés automatiquement selon le type de période du dataset.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- FAQ 3 -->
+            <div class="faq-item">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <span class="font-semibold text-gray-800">Puis-je modifier les colonnes techniques dans le template Excel ?</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </button>
+                <div class="faq-answer hidden p-6 bg-gray-50 text-gray-700">
+                    <p class="mb-3">
+                        <strong class="text-red-600">Non, ne modifiez jamais les colonnes techniques !</strong>
+                    </p>
+                    <p class="mb-3">Les colonnes suivantes sont protégées et essentielles pour le traitement :</p>
+                    <ul class="list-disc ml-6 space-y-1">
+                        <li><code class="bg-gray-200 px-2 py-1 rounded">orgUnit</code> - ID de l'organisation</li>
+                        <li><code class="bg-gray-200 px-2 py-1 rounded">dataElement</code> - ID de l'élément de données</li>
+                        <li><code class="bg-gray-200 px-2 py-1 rounded">categoryOptionCombo</code> - ID de la combinaison</li>
+                        <li><code class="bg-gray-200 px-2 py-1 rounded">period</code> - Période au format DHIS2</li>
+                    </ul>
+                    <p class="mt-3">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        Remplissez uniquement la colonne <strong>value</strong> avec vos données.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- FAQ 4 -->
+            <div class="faq-item">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <span class="font-semibold text-gray-800">Que faire en cas d'erreur lors du traitement ?</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </button>
+                <div class="faq-answer hidden p-6 bg-gray-50 text-gray-700">
+                    <p class="mb-3">L'application affiche plusieurs types d'erreurs avec des messages détaillés :</p>
+                    <div class="space-y-3">
+                        <div>
+                            <strong class="text-red-600">Erreurs de validation :</strong>
+                            <p class="text-sm mt-1">Vérifiez que toutes les valeurs requises sont présentes et au bon format.</p>
+                        </div>
+                        <div>
+                            <strong class="text-red-600">Erreurs de mapping :</strong>
+                            <p class="text-sm mt-1">Les IDs (organisation, élément, catégorie) doivent correspondre aux métadonnées chargées.</p>
+                        </div>
+                        <div>
+                            <strong class="text-red-600">Erreurs de format :</strong>
+                            <p class="text-sm mt-1">Les périodes doivent respecter le format DHIS2 exact.</p>
+                        </div>
+                    </div>
+                    <p class="mt-3 p-3 bg-blue-50 border-l-4 border-blue-500 text-sm">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Consultez le rapport d'erreurs détaillé après le traitement pour identifier les lignes problématiques.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- FAQ 5 -->
+            <div class="faq-item">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <span class="font-semibold text-gray-800">Combien de temps les données restent-elles en session ?</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </button>
+                <div class="faq-answer hidden p-6 bg-gray-50 text-gray-700">
+                    <p class="mb-3">
+                        Les données de session sont stockées temporairement sur le serveur :
+                    </p>
+                    <ul class="list-disc ml-6 space-y-2">
+                        <li><strong>Durée de vie :</strong> 2 heures d'inactivité</li>
+                        <li><strong>Nettoyage automatique :</strong> Les fichiers sont supprimés après expiration</li>
+                        <li><strong>Sécurité :</strong> Chaque session est isolée et identifiée de manière unique</li>
+                    </ul>
+                    <p class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-500 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Important :</strong> Téléchargez vos fichiers JSON générés avant la fin de votre session.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- FAQ 6 -->
+            <div class="faq-item">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <span class="font-semibold text-gray-800">Comment importer le JSON généré dans DHIS2 ?</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </button>
+                <div class="faq-answer hidden p-6 bg-gray-50 text-gray-700">
+                    <p class="mb-3">Deux méthodes sont disponibles :</p>
+                    
+                    <div class="mb-4">
+                        <strong class="text-blue-600">Méthode 1 : Via l'interface DHIS2</strong>
+                        <ol class="list-decimal ml-6 mt-2 space-y-1">
+                            <li>Connectez-vous à DHIS2</li>
+                            <li>Allez dans <strong>Import/Export</strong> → <strong>Data Import</strong></li>
+                            <li>Sélectionnez le fichier JSON généré</li>
+                            <li>Choisissez les options d'import (stratégie, mode)</li>
+                            <li>Cliquez sur <strong>Import</strong></li>
+                        </ol>
+                    </div>
+                    
+                    <div>
+                        <strong class="text-blue-600">Méthode 2 : Via l'API</strong>
+                        <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">curl -X POST "https://your-dhis2.org/api/dataValueSets" \
+  -H "Content-Type: application/json" \
+  -u username:password \
+  -d @dhis2_import.json</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Conseils et astuces -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Bonnes pratiques -->
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+            <h3 class="text-lg font-bold text-green-900 mb-4 flex items-center">
+                <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                Bonnes Pratiques
+            </h3>
+            <ul class="space-y-3 text-sm text-green-800">
+                <li class="flex items-start">
+                    <i class="fas fa-chevron-right text-green-600 mr-2 mt-1"></i>
+                    <span>Vérifiez toujours les statistiques après le traitement</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-chevron-right text-green-600 mr-2 mt-1"></i>
+                    <span>Testez avec un petit échantillon avant l'import complet</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-chevron-right text-green-600 mr-2 mt-1"></i>
+                    <span>Conservez une copie de vos fichiers Excel sources</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-chevron-right text-green-600 mr-2 mt-1"></i>
+                    <span>Utilisez le preview JSON pour vérifier le contenu</span>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Erreurs courantes -->
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h3 class="text-lg font-bold text-red-900 mb-4 flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                Erreurs Courantes à Éviter
+            </h3>
+            <ul class="space-y-3 text-sm text-red-800">
+                <li class="flex items-start">
+                    <i class="fas fa-times text-red-600 mr-2 mt-1"></i>
+                    <span>Modifier les colonnes techniques du template</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-times text-red-600 mr-2 mt-1"></i>
+                    <span>Utiliser des formats de période incorrects</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-times text-red-600 mr-2 mt-1"></i>
+                    <span>Mélanger des données de périodes différentes</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-times text-red-600 mr-2 mt-1"></i>
+                    <span>Oublier de télécharger le JSON avant expiration</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Support -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-life-ring mr-2"></i>Besoin d'Aide Supplémentaire ?
+        </h2>
+        <p class="text-gray-700 mb-4">
+            Si vous rencontrez un problème non couvert par cette documentation, 
+            n'hésitez pas à contacter le support.
+        </p>
+        <div class="flex items-center space-x-4">
+            <a href="{{ url_for('main.about') }}" 
+               class="inline-flex items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-info-circle mr-2"></i>
+                En savoir plus
+            </a>
+            <a href="{{ url_for('main.index') }}" 
+               class="inline-flex items-center px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                <i class="fas fa-home mr-2"></i>
+                Retour au Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.faq-question i {
+    transition: transform 0.3s;
+}
+
+.faq-item.active .faq-question i {
+    transform: rotate(180deg);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        const answer = item.querySelector('.faq-answer');
+        
+        question.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
+            
+            // Fermer tous les autres
+            faqItems.forEach(otherItem => {
+                otherItem.classList.remove('active');
+                otherItem.querySelector('.faq-answer').classList.add('hidden');
+            });
+            
+            // Toggle celui-ci
+            if (!isActive) {
+                item.classList.add('active');
+                answer.classList.remove('hidden');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

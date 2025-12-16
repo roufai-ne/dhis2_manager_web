@@ -1,0 +1,341 @@
+{% extends "layout.html" %}
+
+{% block title %}Mapping Pivoté - DHIS2 Data Manager{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Mapping des Data Elements</h1>
+        <p class="text-lg text-gray-600">Analyse et mapping automatique des données au format pivoté</p>
+    </div>
+
+    <!-- Upload Section -->
+    <div id="upload-section" class="card mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+            <div class="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+                <i class="fas fa-table text-white"></i>
+            </div>
+            Upload Fichier Excel (Format Pivoté)
+        </h2>
+
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-500 transition-colors">
+            <i class="fas fa-file-excel text-6xl text-green-600 mb-4"></i>
+            <h3 class="text-xl font-semibold mb-2">Sélectionnez un fichier Excel</h3>
+            <p class="text-gray-600 mb-4">Format attendu : Data Elements dans les colonnes (valeurs)</p>
+            <input type="file" id="file-input" accept=".xlsx,.xls" class="hidden">
+            <button onclick="document.getElementById('file-input').click()" 
+                    class="btn btn-primary">
+                <i class="fas fa-upload mr-2"></i>
+                Choisir un fichier
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-section" class="hidden card mb-8">
+        <div class="flex items-center justify-center py-12">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p class="text-lg text-gray-600">Analyse du fichier en cours...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-section" class="hidden">
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="card bg-gradient-to-br from-purple-500 to-purple-700 text-white">
+                <h3 class="text-sm font-semibold uppercase tracking-wide mb-2">Data Elements Trouvés</h3>
+                <p class="text-4xl font-bold" id="stat-total-de">0</p>
+            </div>
+            <div class="card bg-gradient-to-br from-green-500 to-green-700 text-white">
+                <h3 class="text-sm font-semibold uppercase tracking-wide mb-2">Auto-matchés</h3>
+                <p class="text-4xl font-bold" id="stat-matched">0</p>
+            </div>
+            <div class="card bg-gradient-to-br from-orange-500 to-orange-700 text-white">
+                <h3 class="text-sm font-semibold uppercase tracking-wide mb-2">À Mapper</h3>
+                <p class="text-4xl font-bold" id="stat-unmatched">0</p>
+            </div>
+            <div class="card bg-gradient-to-br from-blue-500 to-blue-700 text-white">
+                <h3 class="text-sm font-semibold uppercase tracking-wide mb-2">Sections</h3>
+                <p class="text-4xl font-bold" id="stat-sections">0</p>
+            </div>
+        </div>
+
+        <!-- Mapping Table -->
+        <div class="card">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Mapping des Data Elements</h2>
+                <button onclick="autoMatch()" class="btn btn-secondary">
+                    <i class="fas fa-magic mr-2"></i>
+                    Auto-Match
+                </button>
+            </div>
+
+            <div id="sections-container"></div>
+
+            <div class="mt-8 flex justify-end gap-4">
+                <button onclick="resetMapping()" class="btn btn-secondary">
+                    <i class="fas fa-undo mr-2"></i>
+                    Réinitialiser
+                </button>
+                <button onclick="validateMapping()" class="btn btn-primary">
+                    <i class="fas fa-check mr-2"></i>
+                    Valider et Traiter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let extractedData = null;
+let dhis2DataElements = [];
+
+// Load DHIS2 Data Elements on page load
+fetch('/calculator/api/get-dhis2-data-elements')
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            dhis2DataElements = data.data_elements;
+            console.log(`Loaded ${dhis2DataElements.length} DHIS2 data elements`);
+        }
+    })
+    .catch(err => console.error('Error loading DHIS2 DE:', err));
+
+// File input handler
+document.getElementById('file-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Show loading
+    document.getElementById('upload-section').classList.add('hidden');
+    document.getElementById('loading-section').classList.remove('hidden');
+
+    fetch('/calculator/api/extract-pivoted-data-elements', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('loading-section').classList.add('hidden');
+        
+        if (data.success) {
+            extractedData = data;
+            displayResults(data);
+        } else {
+            NotificationManager.error('Erreur: ' + (data.error || 'Erreur inconnue'));
+            document.getElementById('upload-section').classList.remove('hidden');
+        }
+    })
+    .catch(err => {
+        document.getElementById('loading-section').classList.add('hidden');
+        document.getElementById('upload-section').classList.remove('hidden');
+        NotificationManager.error('Erreur: ' + err.message);
+    });
+});
+
+function displayResults(data) {
+    // Update statistics
+    document.getElementById('stat-total-de').textContent = data.statistics.total_data_elements;
+    document.getElementById('stat-matched').textContent = data.statistics.matched_with_dhis2;
+    document.getElementById('stat-unmatched').textContent = data.statistics.unmatched;
+    document.getElementById('stat-sections').textContent = data.statistics.total_sections;
+
+    // Build sections view
+    const container = document.getElementById('sections-container');
+    container.innerHTML = '';
+
+    for (const [sectionName, dataElements] of Object.entries(data.sections_mapping)) {
+        const sectionDiv = document.createElement('div');
+        sectionDiv.className = 'mb-8';
+        
+        const matchedCount = dataElements.filter(de => de.dhis2_matched).length;
+        
+        sectionDiv.innerHTML = `
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-folder-open text-purple-600"></i>
+                ${sectionName}
+                <span class="text-sm font-normal text-gray-500">(${dataElements.length} éléments, ${matchedCount} auto-matchés)</span>
+            </h3>
+            <div class="space-y-3">
+                ${dataElements.map((de, idx) => {
+                    const isMatched = de.dhis2_matched;
+                    return `
+                    <div class="flex items-center gap-4 p-4 ${isMatched ? 'bg-green-50 border-2 border-green-200' : 'bg-gray-50'} rounded-lg">
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900">${de.name}</div>
+                            <div class="text-sm text-gray-500">Colonne: ${de.column}</div>
+                        </div>
+                        <div class="flex-1">
+                            ${isMatched ? `
+                                <div class="p-3 bg-white rounded border-2 border-green-500">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-check-circle text-green-600"></i>
+                                        <span class="font-semibold text-green-800">${de.dhis2_name}</span>
+                                    </div>
+                                    <input type="hidden" 
+                                           id="mapping-${sectionName}-${idx}"
+                                           data-de-name="${de.name}" 
+                                           data-column="${de.column}" 
+                                           data-section="${sectionName}"
+                                           value="${de.dhis2_id}">
+                                </div>
+                            ` : `
+                                <select class="form-select w-full border-orange-500" 
+                                        id="mapping-${sectionName}-${idx}" 
+                                        data-de-name="${de.name}" 
+                                        data-column="${de.column}" 
+                                        data-section="${sectionName}">
+                                    <option value="">-- Sélectionner un Data Element DHIS2 --</option>
+                                    ${dhis2DataElements.map(dhis2De => `
+                                        <option value="${dhis2De.id}" 
+                                                data-name="${dhis2De.name}">
+                                            ${dhis2De.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            `}
+                        </div>
+                        <div class="w-32 text-center">
+                            ${isMatched ? 
+                                '<span class="px-3 py-1 text-xs font-bold rounded-full bg-green-600 text-white">AUTO</span>' :
+                                '<span class="px-3 py-1 text-xs font-bold rounded-full bg-orange-500 text-white">MANUEL</span>'
+                            }
+                        </div>
+                    </div>
+                `}).join('')}
+            </div>
+        `;
+        
+        container.appendChild(sectionDiv);
+    }
+
+    document.getElementById('results-section').classList.remove('hidden');
+}
+
+function autoMatch() {
+    if (!extractedData || !dhis2DataElements.length) {
+        NotificationManager.error('Données non chargées');
+        return;
+    }
+
+    let matchCount = 0;
+
+    // Simple fuzzy matching
+    document.querySelectorAll('select[id^="mapping-"]').forEach(select => {
+        const deName = select.dataset.deName.toLowerCase().trim();
+        
+        // Find best match
+        let bestMatch = null;
+        let bestScore = 0;
+
+        dhis2DataElements.forEach(dhis2De => {
+            const dhis2Name = dhis2De.name.toLowerCase().trim();
+            
+            // Exact match
+            if (dhis2Name === deName) {
+                bestMatch = dhis2De;
+                bestScore = 100;
+            }
+            // Contains match
+            else if (dhis2Name.includes(deName) || deName.includes(dhis2Name)) {
+                const score = Math.max(deName.length / dhis2Name.length, dhis2Name.length / deName.length) * 80;
+                if (score > bestScore) {
+                    bestMatch = dhis2De;
+                    bestScore = score;
+                }
+            }
+        });
+
+        if (bestMatch && bestScore > 60) {
+            select.value = bestMatch.id;
+            const scoreSpan = select.parentElement.nextElementSibling.querySelector('.match-score');
+            if (scoreSpan) {
+                scoreSpan.textContent = `${Math.round(bestScore)}%`;
+                scoreSpan.classList.remove('hidden');
+            }
+            matchCount++;
+        }
+    });
+
+    showNotification(`${matchCount} correspondances automatiques trouvées`, 'success');
+}
+
+function validateMapping() {
+    const mapping = [];
+    let hasErrors = false;
+
+    // Check all selects (manual mapping) and hidden inputs (auto-matched)
+    document.querySelectorAll('[id^="mapping-"]').forEach(input => {
+        const value = input.value;
+        
+        if (!value) {
+            if (input.tagName === 'SELECT') {
+                input.classList.add('border-red-500');
+                hasErrors = true;
+            }
+        } else {
+            if (input.tagName === 'SELECT') {
+                input.classList.remove('border-red-500');
+            }
+            
+            mapping.push({
+                extracted_de: input.dataset.deName,
+                column: input.dataset.column,
+                section: input.dataset.section,
+                dhis2_de_id: value,
+                dhis2_de_name: input.tagName === 'SELECT' ? 
+                    input.options[input.selectedIndex].dataset.name : 
+                    input.previousElementSibling?.textContent || value
+            });
+        }
+    });
+
+    if (hasErrors) {
+        NotificationManager.error('Veuillez sélectionner un Data Element DHIS2 pour chaque élément non-matché');
+        return;
+    }
+
+    console.log('Mapping validated:', mapping);
+    // TODO: Send to backend for processing
+    NotificationManager.success(`Mapping validé! ${mapping.length} correspondances établies (${extractedData.statistics.matched_with_dhis2} auto, ${mapping.length - extractedData.statistics.matched_with_dhis2} manuels)`);
+    NotificationManager.info('Traitement à implémenter...');
+}
+
+function resetMapping() {
+    NotificationManager.warning('Réinitialisation des mappings...', 'Confirmation');
+    
+    setTimeout(() => {
+        document.querySelectorAll('select[id^="mapping-"]').forEach(select => {
+            select.value = '';
+            select.classList.remove('border-red-500');
+        });
+        document.querySelectorAll('.match-score').forEach(span => {
+            span.classList.add('hidden');
+        });
+        NotificationManager.success('Mappings réinitialisés');
+    }, 500);
+}
+
+function showNotification(message, type = 'info') {
+    // Simple notification (you can improve this)
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    }`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

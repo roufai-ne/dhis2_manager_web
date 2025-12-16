@@ -1,0 +1,620 @@
+{% extends "layout.html" %}
+
+{% block title %}Générateur - DHIS2 Data Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.15/themes/default/style.min.css" />
+<style>
+    /* Modern Tree Styling */
+    .jstree-default .jstree-clicked {
+        background: var(--primary-100) !important;
+        border: 1px solid var(--primary-200) !important;
+        color: var(--primary-800) !important;
+        border-radius: var(--radius-md) !important;
+        box-shadow: none !important;
+    }
+
+    .jstree-default .jstree-hovered {
+        background: var(--gray-100) !important;
+        border-radius: var(--radius-md) !important;
+        box-shadow: none !important;
+    }
+
+    .jstree-default .jstree-anchor {
+        padding: 4px 8px !important;
+        transition: all 0.2s;
+    }
+
+    #org-tree-container {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        background: white;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    /* Modern Dataset Cards */
+    .dataset-card {
+        position: relative;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-md);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .dataset-card:hover {
+        border-color: var(--primary-400);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .dataset-card.selected {
+        border-color: var(--primary-600);
+        background: var(--primary-50);
+        box-shadow: 0 0 0 2px var(--primary-100);
+    }
+
+    .dataset-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        background: var(--primary-100);
+        color: var(--primary-600);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .dataset-card.selected .dataset-icon {
+        background: var(--primary-600);
+        color: white;
+    }
+
+    /* Filter Controls */
+    .filter-group {
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-6 py-12 fade-in">
+
+    <!-- Header -->
+    <div class="mb-10 text-center">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">
+            Générateur de Templates
+        </h1>
+        <p class="text-gray-600">
+            Créez des fichiers Excel de saisie personnalisés pour DHIS2
+        </p>
+    </div>
+
+    <!-- Step 1: Dataset Selection -->
+    <div class="card mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-sm">
+                    1
+                </div>
+                <h2 class="text-xl font-bold text-gray-900">Sélectionnez un Dataset</h2>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative w-64">
+                <input type="text" id="dataset-search" class="form-input pl-10 py-2 text-sm"
+                    placeholder="Rechercher un dataset...">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+        </div>
+
+        <div id="datasets-container"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto p-1">
+            {% for dataset in datasets %}
+            <div class="dataset-card" data-id="{{ dataset.id }}" data-period-type="{{ dataset.periodType }}"
+                data-name="{{ dataset.name|lower }}">
+                <div class="dataset-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-gray-900 text-sm truncate" title="{{ dataset.name }}">{{ dataset.name
+                        }}</h3>
+                    <div class="flex items-center gap-2 mt-1">
+                        {% if dataset.code %}
+                        <span class="text-xs font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                            {{ dataset.code }}
+                        </span>
+                        {% endif %}
+                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                            {{ dataset.periodType }}
+                        </span>
+                        {% if dataset.shortName %}
+                        <span class="text-xs text-gray-400 truncate">{{ dataset.shortName }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="dataset-info" class="mt-4 alert alert-info hidden text-sm">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-lg mr-3 mt-0.5"></i>
+                <div id="dataset-details"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Organization Selection -->
+    <div class="card mb-8">
+        <div class="flex items-center gap-4 mb-6">
+            <div
+                class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-sm">
+                2
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Sélectionnez les Organisations</h2>
+        </div>
+
+        <!-- Advanced Filters -->
+        <div class="filter-group grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Filtrer par Groupe</label>
+                <div class="flex gap-2">
+                    <select id="org-group-select" class="form-select text-sm flex-1">
+                        <option value="">Chargement...</option>
+                    </select>
+                    <button id="btn-select-group" class="btn btn-sm btn-secondary" disabled>
+                        <i class="fas fa-check mr-1"></i> Sélectionner
+                    </button>
+                    <button id="btn-deselect-group"
+                        class="btn btn-sm btn-white border border-gray-300 text-gray-700 hover:bg-gray-50" disabled>
+                        <i class="fas fa-times mr-1"></i> Désélectionner
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Filtrer par Niveau</label>
+                <div class="flex gap-2">
+                    <select id="org-level-select" class="form-select text-sm flex-1">
+                        <option value="">Chargement...</option>
+                    </select>
+                    <button id="btn-select-level" class="btn btn-sm btn-secondary" disabled>
+                        <i class="fas fa-check mr-1"></i> Sélectionner
+                    </button>
+                    <button id="btn-deselect-level"
+                        class="btn btn-sm btn-white border border-gray-300 text-gray-700 hover:bg-gray-50" disabled>
+                        <i class="fas fa-times mr-1"></i> Désélectionner
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tree Controls -->
+        <div class="flex flex-wrap items-center gap-2 mb-3 text-sm">
+            <button id="btn-select-all"
+                class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors">
+                <i class="fas fa-check-square mr-1"></i>Tout
+            </button>
+            <button id="btn-deselect-all"
+                class="text-gray-600 hover:text-gray-800 hover:bg-gray-50 px-2 py-1 rounded transition-colors">
+                <i class="fas fa-square mr-1"></i>Aucun
+            </button>
+            <span class="text-gray-300">|</span>
+            <button id="btn-expand-all"
+                class="text-gray-600 hover:text-gray-800 hover:bg-gray-50 px-2 py-1 rounded transition-colors">
+                <i class="fas fa-plus-square mr-1"></i>Déplier
+            </button>
+            <button id="btn-collapse-all"
+                class="text-gray-600 hover:text-gray-800 hover:bg-gray-50 px-2 py-1 rounded transition-colors">
+                <i class="fas fa-minus-square mr-1"></i>Replier
+            </button>
+        </div>
+
+        <div id="org-tree-container">
+            <div id="org-tree"></div>
+        </div>
+
+        <div class="mt-4 flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <span class="text-sm font-medium text-blue-900">Unités sélectionnées</span>
+            <span class="badge badge-primary text-sm">
+                <span id="selected-count">0</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Step 3: Period Configuration -->
+    <div class="card mb-8">
+        <div class="flex items-center gap-4 mb-6">
+            <div
+                class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-sm">
+                3
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Définissez la Période</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="form-group">
+                <label class="form-label text-sm">Type de période</label>
+                <input type="text" id="period-type-display" readonly
+                    class="form-input bg-gray-50 text-gray-500 cursor-not-allowed"
+                    value="Sélectionnez d'abord un dataset">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label text-sm">
+                    Période <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="period-input" placeholder="Ex: 2024" class="form-input font-mono">
+                <p id="period-hint" class="text-xs text-gray-500 mt-2 flex items-center">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-1"></i>
+                    <span>Sélectionnez un dataset pour voir les formats</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Buttons -->
+    <div class="sticky bottom-6 z-10">
+        <div class="card bg-gray-900 text-white shadow-xl border-none transform transition-all hover:scale-[1.01]">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold mb-0.5">Prêt à générer ?</h3>
+                    <p class="text-xs text-gray-400">Vérifiez votre sélection avant de continuer</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-generate"
+                        class="btn bg-blue-600 hover:bg-blue-500 text-white border-none px-6 py-3 text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Template Excel
+                    </button>
+                    <button id="btn-generate-csv-names"
+                        class="btn bg-emerald-600 hover:bg-emerald-500 text-white border-none px-6 py-3 text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                        <i class="fas fa-file-csv mr-2"></i>
+                        CSV (noms)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.15/jstree.min.js"></script>
+<script>
+    let selectedDataset = null;
+    let selectedOrgUnits = [];
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadOrgTree();
+        loadFilters();
+
+        // Dataset Search
+        document.getElementById('dataset-search').addEventListener('input', function (e) {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.dataset-card').forEach(card => {
+                const name = card.dataset.name;
+                if (name.includes(term)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        document.querySelectorAll('.dataset-card').forEach(card => {
+            card.addEventListener('click', function () { selectDataset(this); });
+        });
+
+        // Tree Controls
+        document.getElementById('btn-select-all').addEventListener('click', () => $('#org-tree').jstree('check_all'));
+        document.getElementById('btn-deselect-all').addEventListener('click', () => $('#org-tree').jstree('uncheck_all'));
+        document.getElementById('btn-expand-all').addEventListener('click', () => $('#org-tree').jstree('open_all'));
+        document.getElementById('btn-collapse-all').addEventListener('click', () => $('#org-tree').jstree('close_all'));
+
+        // Filter Controls
+        document.getElementById('btn-select-group').addEventListener('click', selectByGroup);
+        document.getElementById('btn-deselect-group').addEventListener('click', deselectByGroup);
+        document.getElementById('btn-select-level').addEventListener('click', selectByLevel);
+        document.getElementById('btn-deselect-level').addEventListener('click', deselectByLevel);
+
+        document.getElementById('org-group-select').addEventListener('change', function () {
+            document.getElementById('btn-select-group').disabled = !this.value;
+            document.getElementById('btn-deselect-group').disabled = !this.value;
+        });
+        document.getElementById('org-level-select').addEventListener('change', function () {
+            document.getElementById('btn-select-level').disabled = !this.value;
+            document.getElementById('btn-deselect-level').disabled = !this.value;
+        });
+
+        document.getElementById('btn-generate').addEventListener('click', generateTemplate);
+        document.getElementById('btn-generate-csv-names').addEventListener('click', generateCsvNames);
+        document.getElementById('period-input').addEventListener('input', validateForm);
+    });
+
+    function loadFilters() {
+        // Load Groups
+        fetch('/generator/api/org-unit-groups')
+            .then(r => r.json())
+            .then(groups => {
+                const select = document.getElementById('org-group-select');
+                select.innerHTML = '<option value="">Choisir un groupe...</option>';
+                groups.forEach(g => {
+                    select.innerHTML += `<option value="${g.id}">${g.name}</option>`;
+                });
+            })
+            .catch(e => console.error('Erreur groupes:', e));
+
+        // Load Levels
+        fetch('/generator/api/org-unit-levels')
+            .then(r => r.json())
+            .then(levels => {
+                const select = document.getElementById('org-level-select');
+                select.innerHTML = '<option value="">Choisir un niveau...</option>';
+                levels.forEach(l => {
+                    select.innerHTML += `<option value="${l.level}">${l.name} (Niveau ${l.level})</option>`;
+                });
+            })
+            .catch(e => console.error('Erreur niveaux:', e));
+    }
+
+    function selectByGroup() {
+        const groupId = document.getElementById('org-group-select').value;
+        if (!groupId) return;
+
+        LoadingOverlay.show('Sélection du groupe...');
+        fetch(`/generator/api/org-units/by-group/${groupId}`)
+            .then(r => r.json())
+            .then(data => {
+                const instance = $('#org-tree').jstree(true);
+                instance.check_node(data.ids);
+                revealSelected(data.ids);
+                NotificationManager.success(`${data.ids.length} unités sélectionnées`);
+            })
+            .catch(e => NotificationManager.error('Erreur de sélection'))
+            .finally(() => LoadingOverlay.hide());
+    }
+
+    function selectByLevel() {
+        const level = document.getElementById('org-level-select').value;
+        if (!level) return;
+
+        LoadingOverlay.show('Sélection du niveau...');
+        fetch(`/generator/api/org-units/by-level/${level}`)
+            .then(r => r.json())
+            .then(data => {
+                const instance = $('#org-tree').jstree(true);
+                instance.check_node(data.ids);
+                revealSelected(data.ids);
+                NotificationManager.success(`${data.ids.length} unités sélectionnées`);
+            })
+            .catch(e => NotificationManager.error('Erreur de sélection'))
+            .finally(() => LoadingOverlay.hide());
+    }
+
+    function revealSelected(ids) {
+        const instance = $('#org-tree').jstree(true);
+        let parentsToOpen = new Set();
+
+        ids.forEach(id => {
+            let parent = instance.get_parent(id);
+            while (parent && parent !== '#') {
+                parentsToOpen.add(parent);
+                parent = instance.get_parent(parent);
+            }
+        });
+
+        if (parentsToOpen.size > 0) {
+            instance.open_node(Array.from(parentsToOpen));
+        }
+    }
+
+    function revealSelected(ids) {
+        const instance = $('#org-tree').jstree(true);
+        let parentsToOpen = new Set();
+
+        ids.forEach(id => {
+            let parent = instance.get_parent(id);
+            while (parent && parent !== '#') {
+                parentsToOpen.add(parent);
+                parent = instance.get_parent(parent);
+            }
+        });
+
+        if (parentsToOpen.size > 0) {
+            instance.open_node(Array.from(parentsToOpen));
+        }
+    }
+
+    function loadOrgTree() {
+        fetch('/generator/api/org-tree')
+            .then(r => r.json())
+            .then(data => {
+                $('#org-tree').jstree({
+                    'core': {
+                        'data': data,
+                        'themes': {
+                            'name': 'default',
+                            'responsive': true
+                        }
+                    },
+                    'checkbox': { 'keep_selected_style': false, 'three_state': false },
+                    'plugins': ['checkbox', 'search', 'types']
+                }).on('changed.jstree', function (e, data) {
+                    selectedOrgUnits = data.selected;
+                    document.getElementById('selected-count').textContent = selectedOrgUnits.length;
+                    validateForm();
+                });
+            })
+            .catch(e => console.error('Erreur:', e));
+    }
+
+    function selectDataset(card) {
+        document.querySelectorAll('.dataset-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+
+        selectedDataset = { id: card.dataset.id, periodType: card.dataset.periodType };
+        document.getElementById('period-type-display').value = selectedDataset.periodType;
+
+        fetch(`/generator/api/dataset/${selectedDataset.id}/info`)
+            .then(r => r.json())
+            .then(info => {
+                let html = `<p class="mb-1"><strong>${info.num_elements}</strong> éléments de données</p>`;
+                if (info.categories && info.categories.length > 0) {
+                    html += `<p class="text-gray-600">Catégories: ${info.categories.join(', ')}</p>`;
+                }
+                document.getElementById('dataset-details').innerHTML = html;
+                document.getElementById('dataset-info').classList.remove('hidden');
+            });
+
+        fetch(`/generator/api/period-examples/${selectedDataset.periodType}`)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('period-hint').innerHTML = `<i class="fas fa-lightbulb text-yellow-500 mr-1"></i> Exemples valides: <span class="font-mono font-bold text-gray-700">${data.examples.join(', ')}</span>`;
+            });
+
+        validateForm();
+    }
+
+    function validateForm() {
+        const isValid = selectedDataset && selectedOrgUnits.length > 0 && document.getElementById('period-input').value.trim();
+        document.getElementById('btn-generate').disabled = !isValid;
+        document.getElementById('btn-generate-csv-names').disabled = !isValid;
+    }
+
+    function generateTemplate() {
+        const period = document.getElementById('period-input').value.trim();
+        if (!selectedDataset || !selectedOrgUnits.length || !period) return;
+
+        LoadingOverlay.show('Génération du template Excel...');
+
+        fetch('/generator/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                dataset_id: selectedDataset.id,
+                org_unit_ids: selectedOrgUnits,
+                period: period,
+                period_type: selectedDataset.periodType
+            })
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw error;
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Template_${period}.xlsx`;
+                a.click();
+                URL.revokeObjectURL(url);
+                NotificationManager.success('Template généré avec succès !');
+            })
+            .catch(error => {
+                const message = error.error || error.message || 'Erreur lors de la génération';
+                NotificationManager.error(message);
+                if (error.details && Array.isArray(error.details)) {
+                    displayValidationErrors(error.details);
+                }
+            })
+            .finally(() => {
+                LoadingOverlay.hide();
+            });
+    }
+
+    function generateCsvNames() {
+        const period = document.getElementById('period-input').value.trim();
+        if (!selectedDataset || !selectedOrgUnits.length || !period) return;
+
+        LoadingOverlay.show('Génération du CSV (noms)...');
+
+        fetch('/generator/api/generate-csv-names', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                dataset_id: selectedDataset.id,
+                org_unit_ids: selectedOrgUnits,
+                period: period,
+                period_type: selectedDataset.periodType
+            })
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw error;
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dataValueSets_${period}_names.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                NotificationManager.success('CSV (noms) généré avec succès !');
+            })
+            .catch(error => {
+                const message = error.error || error.message || 'Erreur lors de la génération du CSV';
+                NotificationManager.error(message);
+                if (error.details && Array.isArray(error.details)) {
+                    displayValidationErrors(error.details);
+                }
+            })
+            .finally(() => {
+                LoadingOverlay.hide();
+            });
+    }
+    function deselectByGroup() {
+        const groupId = document.getElementById('org-group-select').value;
+        if (!groupId) return;
+
+        LoadingOverlay.show('Désélection du groupe...');
+        fetch(`/generator/api/org-units/by-group/${groupId}`)
+            .then(r => r.json())
+            .then(data => {
+                const instance = $('#org-tree').jstree(true);
+                instance.uncheck_node(data.ids);
+                NotificationManager.success(`${data.ids.length} unités désélectionnées`);
+            })
+            .catch(e => NotificationManager.error('Erreur de désélection'))
+            .finally(() => LoadingOverlay.hide());
+    }
+
+    function deselectByLevel() {
+        const level = document.getElementById('org-level-select').value;
+        if (!level) return;
+
+        LoadingOverlay.show('Désélection du niveau...');
+        fetch(`/generator/api/org-units/by-level/${level}`)
+            .then(r => r.json())
+            .then(data => {
+                const instance = $('#org-tree').jstree(true);
+                instance.uncheck_node(data.ids);
+                NotificationManager.success(`${data.ids.length} unités désélectionnées`);
+            })
+            .catch(e => NotificationManager.error('Erreur de désélection'))
+            .finally(() => LoadingOverlay.hide());
+    }
+</script>
+{% endblock %}
