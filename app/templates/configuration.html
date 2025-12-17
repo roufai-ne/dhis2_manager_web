@@ -105,7 +105,8 @@
                             class="font-mono bg-white px-2 py-0.5 rounded border border-green-200 text-green-800">{{
                             metadata_info.filename }}</span></p>
                 </div>
-                <form action="{{ url_for('configuration.clear_metadata') }}" method="POST" class="inline" id="clear-metadata-form">
+                <form action="{{ url_for('configuration.clear_metadata') }}" method="POST" class="inline"
+                    id="clear-metadata-form">
                     <button type="button" id="clear-metadata-btn"
                         class="text-red-600 hover:text-red-800 bg-white hover:bg-red-50 border border-red-200 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm">
                         <i class="fas fa-trash-alt"></i> Effacer
@@ -333,11 +334,14 @@
         // DHIS2 Disconnect
         const disconnectBtn = document.getElementById('disconnect-btn');
         if (disconnectBtn) {
-            disconnectBtn.addEventListener('click', async function () {
+            disconnectBtn.addEventListener('click', function () {
                 NotificationManager.warning('Déconnexion en cours...', 'Confirmation');
-                
-                setTimeout(() => {
-                    LoadingOverlay.show('Déconnexion...');
+
+                setTimeout(handleDisconnect, 500);
+            });
+
+            async function handleDisconnect() {
+                LoadingOverlay.show('Déconnexion...');
                 try {
                     const response = await fetch("{{ url_for('configuration.disconnect_dhis2') }}", {
                         method: 'POST'
@@ -351,16 +355,15 @@
                     LoadingOverlay.hide();
                     NotificationManager.error('Erreur lors de la déconnexion');
                 }
-                }, 500);
-            });
+            }
         }
 
         // Clear Metadata Button
         const clearMetadataBtn = document.getElementById('clear-metadata-btn');
         if (clearMetadataBtn) {
-            clearMetadataBtn.addEventListener('click', function() {
+            clearMetadataBtn.addEventListener('click', function () {
                 NotificationManager.warning('Effacement des métadonnées en cours...', 'Confirmation');
-                
+
                 setTimeout(() => {
                     document.getElementById('clear-metadata-form').submit();
                 }, 500);

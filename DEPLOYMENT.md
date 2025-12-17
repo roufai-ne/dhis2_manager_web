@@ -50,7 +50,17 @@ nano .env
 Générer une clé secrète forte:
 
 ```bash
+# Python 3.6+
 python -c "import secrets; print(secrets.token_hex(32))"
+
+# OU Python 2.7+ / Python 3 (toutes versions)
+python -c "import os, binascii; print(binascii.hexlify(os.urandom(32)).decode())"
+
+# OU PowerShell (Windows)
+python -c "import os; import binascii; print(binascii.hexlify(os.urandom(32)).decode())"
+
+# OU générer en ligne
+# Linux/Mac: openssl rand -hex 32
 ```
 
 Copier la sortie dans `.env`:
@@ -376,7 +386,11 @@ sudo chmod -R 755 sessions/ logs/ uploads/
 cat .env | grep SECRET_KEY
 
 # Si absent, le générer
+# Python 3.6+
 echo "SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')" >> .env
+
+# OU Python 2.7+ / toutes versions
+echo "SECRET_KEY=$(python -c 'import os, binascii; print(binascii.hexlify(os.urandom(32)).decode())')" >> .env
 ```
 
 ### Uploads échouent

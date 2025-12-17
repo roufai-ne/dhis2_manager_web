@@ -19,8 +19,12 @@ chmod +x cleanup.sh
 # Copier le template
 cp .env.example .env
 
-# Générer SECRET_KEY
+# Générer SECRET_KEY (choisir une commande selon votre Python)
+# Python 3.6+:
 python -c "import secrets; print(secrets.token_hex(32))"
+
+# Python 2.7+ / toutes versions:
+python -c "import os, binascii; print(binascii.hexlify(os.urandom(32)).decode())"
 
 # Éditer .env et remplacer SECRET_KEY
 nano .env  # ou notepad .env sur Windows

@@ -155,13 +155,13 @@
         position: relative;
     }
 
-    input[name="data-type"]:checked + .data-type-card {
+    input[name="data-type"]:checked+.data-type-card {
         border-color: var(--primary-600);
         background-color: var(--primary-50);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    input[name="data-type"][value="pivot"]:checked + .data-type-card {
+    input[name="data-type"][value="pivot"]:checked+.data-type-card {
         border-color: #9333ea;
         background-color: #faf5ff;
     }
@@ -179,11 +179,11 @@
         transition: all 0.3s ease;
     }
 
-    input[name="data-type"]:checked + .data-type-card::after {
+    input[name="data-type"]:checked+.data-type-card::after {
         content: '✓';
         display: flex;
         align-items: center;
-        justify-center;
+        justify-content: center;
         background: var(--primary-600);
         border-color: var(--primary-600);
         color: white;
@@ -191,7 +191,7 @@
         font-weight: bold;
     }
 
-    input[name="data-type"][value="pivot"]:checked + .data-type-card::after {
+    input[name="data-type"][value="pivot"]:checked+.data-type-card::after {
         background: #9333ea;
         border-color: #9333ea;
     }
@@ -292,7 +292,9 @@
                             <i class="fas fa-check-circle text-2xl"></i>
                         </div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Mode Automatique <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold ml-1">Nouveau</span></h3>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Mode Automatique <span
+                            class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold ml-1">Nouveau</span>
+                    </h3>
                     <p class="text-gray-600 text-sm">
                         Traitement intelligent TCD vers template DHIS2.
                         Normalisation automatique, mapping dynamique, gestion des cellules fusionnées.
@@ -385,7 +387,8 @@
                         <!-- Mode Normal -->
                         <label class="cursor-pointer">
                             <input type="radio" name="data-type" value="normal" class="hidden" checked>
-                            <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-all data-type-card">
+                            <div
+                                class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-all data-type-card">
                                 <div class="flex items-center gap-3 mb-2">
                                     <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                                         <i class="fas fa-file-invoice text-blue-600"></i>
@@ -404,7 +407,8 @@
                         <!-- Mode Tableau Croisé -->
                         <label class="cursor-pointer">
                             <input type="radio" name="data-type" value="pivot" class="hidden">
-                            <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-purple-500 transition-all data-type-card">
+                            <div
+                                class="border-2 border-gray-200 rounded-lg p-4 hover:border-purple-500 transition-all data-type-card">
                                 <div class="flex items-center gap-3 mb-2">
                                     <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                                         <i class="fas fa-table text-purple-600"></i>
@@ -428,18 +432,24 @@
                             <div class="flex-1">
                                 <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2">
                                     Mode Tableau Croisé Dynamique (TCD)
-                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">Auto-détection ✨</span>
+                                    <span
+                                        class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">Auto-détection
+                                        ✨</span>
                                 </h4>
                                 <p class="text-sm text-gray-700 mb-2">
-                                    Les <strong>data elements sont automatiquement détectés</strong> depuis la première colonne de votre fichier.
+                                    Les <strong>data elements sont automatiquement détectés</strong> depuis la première
+                                    colonne de votre fichier.
                                 </p>
                                 <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
-                                    <li><strong>Première colonne</strong> = noms des indicateurs/data elements (détectés automatiquement)</li>
+                                    <li><strong>Première colonne</strong> = noms des indicateurs/data elements (détectés
+                                        automatiquement)</li>
                                     <li><strong>Autres colonnes</strong> = noms ou codes des organisations</li>
                                     <li><strong>Valeurs</strong> = données numériques aux intersections</li>
                                 </ul>
                                 <div class="mt-3 bg-white border border-purple-200 rounded-lg p-3">
-                                    <p class="text-xs text-gray-600 mb-1"><i class="fas fa-lightbulb text-yellow-500 mr-1"></i><strong>Exemple de format :</strong></p>
+                                    <p class="text-xs text-gray-600 mb-1"><i
+                                            class="fas fa-lightbulb text-yellow-500 mr-1"></i><strong>Exemple de format
+                                            :</strong></p>
                                     <pre class="text-xs text-gray-700 font-mono">Indicateur          │ USSGB │ USTB │ UMN
 ────────────────────┼───────┼──────┼─────
 Effectif Licence    │  450  │  320 │ 280
@@ -454,17 +464,13 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                             <label for="pivot-period" class="form-label required">
                                 <i class="fas fa-calendar mr-2"></i>Période
                             </label>
-                            <input 
-                                type="text" 
-                                id="pivot-period" 
-                                class="form-input" 
-                                placeholder="Ex: 2024, 202401, 2024Q1..."
-                                value="2024"
-                            >
+                            <input type="text" id="pivot-period" class="form-input"
+                                placeholder="Ex: 2024, 202401, 2024Q1..." value="2024">
                             <p class="text-sm text-gray-600 mt-2">
                                 <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-                                Format selon le type : <code class="text-xs bg-gray-100 px-2 py-0.5 rounded">2024</code> (annuel), 
-                                <code class="text-xs bg-gray-100 px-2 py-0.5 rounded">202401</code> (mensuel), 
+                                Format selon le type : <code class="text-xs bg-gray-100 px-2 py-0.5 rounded">2024</code>
+                                (annuel),
+                                <code class="text-xs bg-gray-100 px-2 py-0.5 rounded">202401</code> (mensuel),
                                 <code class="text-xs bg-gray-100 px-2 py-0.5 rounded">2024Q1</code> (trimestriel)
                             </p>
                         </div>
@@ -472,7 +478,8 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                         <!-- Data Element (Optional) -->
                         <div class="form-group">
                             <label for="pivot-data-element" class="form-label">
-                                <i class="fas fa-chart-bar mr-2"></i>Data Element fixe <span class="text-gray-500 font-normal">(optionnel)</span>
+                                <i class="fas fa-chart-bar mr-2"></i>Data Element fixe <span
+                                    class="text-gray-500 font-normal">(optionnel)</span>
                             </label>
                             <select id="pivot-data-element" class="form-input">
                                 <option value="">-- Auto-détection depuis le fichier --</option>
@@ -480,7 +487,8 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                             </select>
                             <p class="text-sm text-gray-600 mt-2">
                                 <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-                                <strong>Laisser vide</strong> pour détecter automatiquement les data elements depuis la première colonne.<br>
+                                <strong>Laisser vide</strong> pour détecter automatiquement les data elements depuis la
+                                première colonne.<br>
                                 Sélectionner un DE uniquement si toutes les lignes utilisent le même indicateur.
                             </p>
                         </div>
@@ -490,8 +498,10 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                             <div class="flex items-start gap-2">
                                 <i class="fas fa-question-circle text-blue-600 mt-0.5"></i>
                                 <div class="text-sm text-blue-800">
-                                    <strong>Besoin d'aide ?</strong> Consultez la 
-                                    <a href="#" class="underline hover:text-blue-900" onclick="NotificationManager.info('Documentation TCD multi-DE disponible dans MODE_TCD_MULTI_DE.md', 'Documentation'); return false;">documentation du mode TCD</a>
+                                    <strong>Besoin d'aide ?</strong> Consultez la
+                                    <a href="#" class="underline hover:text-blue-900"
+                                        onclick="NotificationManager.info('Documentation TCD multi-DE disponible dans MODE_TCD_MULTI_DE.md', 'Documentation'); return false;">documentation
+                                        du mode TCD</a>
                                     pour plus d'exemples.
                                 </div>
                             </div>
@@ -511,7 +521,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
 
     <!-- Auto Mode Sections -->
     <div id="auto-sections" class="hidden">
-        
+
         <!-- Étape 1: Upload Template DHIS2 -->
         <div class="card mb-8">
             <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
@@ -520,7 +530,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 </div>
                 Étape 1: Template DHIS2
             </h2>
-            
+
             <div class="mb-6">
                 <label class="form-label">Sélectionnez votre template DHIS2 généré</label>
                 <input type="file" id="auto-template-input" accept=".xlsx,.xls" class="form-input">
@@ -529,7 +539,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     Le template doit être généré depuis le module "Générateur de Templates"
                 </p>
             </div>
-            
+
             <div id="auto-template-info" class="hidden">
                 <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                     <div class="flex items-start gap-3">
@@ -555,7 +565,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 </div>
                 Étape 2: Fichier TCD
             </h2>
-            
+
             <form action="{{ url_for('calculator.upload_excel') }}" class="calc-dropzone" id="auto-tcd-dropzone">
                 <div class="dz-message needsclick">
                     <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
@@ -564,7 +574,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     <p class="text-sm text-gray-400 mt-2">Excel (.xlsx, .xls)</p>
                 </div>
             </form>
-            
+
             <div id="auto-tcd-info" class="mt-6 hidden">
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div class="flex items-start gap-3">
@@ -653,11 +663,11 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 <p class="text-sm text-gray-600 mb-4">
                     Associez les acronymes du TCD aux noms complets du template
                 </p>
-                
+
                 <div id="auto-org-mappings" class="space-y-3">
                     <!-- Dynamiquement rempli -->
                 </div>
-                
+
                 <button type="button" onclick="addAutoOrgMapping()" class="btn-secondary mt-4">
                     <i class="fas fa-plus mr-2"></i>Ajouter un mapping
                 </button>
@@ -671,11 +681,11 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 <p class="text-sm text-gray-600 mb-4">
                     Associez les valeurs du TCD aux Data Elements du template (Section + Nom)
                 </p>
-                
+
                 <div id="auto-de-mappings" class="space-y-3">
                     <!-- Dynamiquement rempli -->
                 </div>
-                
+
                 <button type="button" onclick="addAutoDEMapping()" class="btn-secondary mt-4">
                     <i class="fas fa-plus mr-2"></i>Ajouter un mapping
                 </button>
@@ -724,7 +734,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     <i class="fas fa-exclamation-triangle text-orange-600"></i>
                     Détails des erreurs
                 </h3>
-                
+
                 <div id="auto-unmapped-orgs" class="mb-6 hidden">
                     <h4 class="font-bold text-gray-800 mb-2">Organisations non mappées :</h4>
                     <div id="auto-unmapped-orgs-list" class="text-sm text-gray-700 space-y-1"></div>
@@ -750,8 +760,10 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data Element</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Organisation</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data Element
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Organisation
+                                </th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">COC</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Période</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valeur</th>
@@ -834,7 +846,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Sheet Selection for Mapping -->
                 <div class="mt-4 form-group">
                     <label for="mapping-select-sheet" class="form-label">
@@ -1023,10 +1035,12 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     <div class="ml-3">
                         <h3 class="text-sm font-bold text-blue-900 mb-2">Format Pivoté Détecté</h3>
                         <p class="text-sm text-blue-800 mb-2">
-                            Les data elements sont contenus dans les <strong>valeurs des colonnes</strong>, pas dans les noms des colonnes.
+                            Les data elements sont contenus dans les <strong>valeurs des colonnes</strong>, pas dans les
+                            noms des colonnes.
                         </p>
                         <p class="text-sm text-blue-700">
-                            <strong>Exemple:</strong> Dans la colonne "Cycle", les valeurs "1er cycle", "2e cycle", "3e cycle" sont des data elements DHIS2 distincts.
+                            <strong>Exemple:</strong> Dans la colonne "Cycle", les valeurs "1er cycle", "2e cycle", "3e
+                            cycle" sont des data elements DHIS2 distincts.
                         </p>
                     </div>
                 </div>
@@ -1222,7 +1236,8 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 <div class="flex items-start gap-3">
                     <i class="fas fa-lightbulb text-blue-600 text-xl"></i>
                     <div class="text-sm text-blue-800">
-                        <strong>Mapping intelligent :</strong> Les suggestions sont générées automatiquement en analysant
+                        <strong>Mapping intelligent :</strong> Les suggestions sont générées automatiquement en
+                        analysant
                         vos données et les métadonnées DHIS2. Vous pouvez les modifier si nécessaire.
                     </div>
                 </div>
@@ -1328,7 +1343,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     <i class="fas fa-exclamation-triangle text-orange-600"></i>
                     Détails des erreurs
                 </h3>
-                
+
                 <!-- Unmapped Orgs -->
                 <div id="tcd-unmapped-orgs" class="mb-6 hidden">
                     <h4 class="font-bold text-gray-800 mb-2">Organisations non mappées :</h4>
@@ -1504,7 +1519,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 // Hide all sections
                 document.getElementById('template-upload-section').classList.add('hidden');
                 document.getElementById('auto-sections').classList.add('hidden');
-                
+
                 // Show selected section
                 if (this.value === 'template') {
                     document.getElementById('template-upload-section').classList.remove('hidden');
@@ -1537,7 +1552,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
 
         // Data type selection event listeners
         document.querySelectorAll('input[name="data-type"]').forEach(radio => {
-            radio.addEventListener('change', function() {
+            radio.addEventListener('change', function () {
                 const pivotOptions = document.getElementById('pivot-options');
                 if (this.value === 'pivot') {
                     pivotOptions.classList.remove('hidden');
@@ -1692,7 +1707,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                         document.getElementById('mapping-file-info').classList.remove('hidden');
                         document.getElementById('ai-analysis-section').classList.remove('hidden'); // Show AI button
                         NotificationManager.success('Fichier chargé avec succès');
-                        
+
                         // Charger les onglets pour le mode mapping (qui chargera ensuite les colonnes)
                         loadMappingSheets();
                     }
@@ -1730,7 +1745,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     // Format pivoté détecté avec des matches
                     LoadingOverlay.hide();
                     showPivotedMappingInterface(data);
-                    
+
                     const colsList = data.data_element_columns.join(', ');
                     NotificationManager.success(
                         `✓ Format pivoté détecté!\n` +
@@ -1762,14 +1777,14 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
 
     function applyAISuggestions(data) {
         console.log('AI Analysis Result:', data);
-        
+
         // Show AI result badge with confidence color
         const badge = document.getElementById('ai-result-badge');
         badge.classList.remove('hidden');
-        
+
         const confidence = Math.round(data.confidence * 100);
         document.getElementById('ai-confidence').textContent = confidence;
-        
+
         // Color code based on confidence
         const badgeElement = badge.querySelector('span');
         if (confidence >= 80) {
@@ -1779,10 +1794,10 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         } else {
             badgeElement.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800';
         }
-        
+
         // Show reasoning
         let reasoningHtml = `<strong>Analyse:</strong> ${data.reasoning}`;
-        
+
         // Show warnings if any
         if (data.warnings && data.warnings.length > 0) {
             reasoningHtml += `<br><br><strong class="text-orange-600">⚠️ Avertissements:</strong><ul class="list-disc ml-5 mt-1">`;
@@ -1791,7 +1806,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             });
             reasoningHtml += `</ul>`;
         }
-        
+
         document.getElementById('ai-reasoning').innerHTML = reasoningHtml;
 
         // Show mapping configuration section
@@ -1827,7 +1842,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 console.log(`Period column detected: ${m.period} (manual mapping may be required)`);
                 NotificationManager.info(`Période détectée dans la colonne "${m.period}". Vérifiez le format dans les données.`);
             }
-            
+
             // Data Element
             if (m.data_element) {
                 setTimeout(() => {
@@ -1838,7 +1853,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     }
                 }, 100);
             }
-            
+
             // Value Column (for values mode)
             if (data.processing_mode === 'values' && m.value) {
                 setTimeout(() => {
@@ -1860,14 +1875,14 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                             console.log(`Mapped category ${idx} to column: ${catCol}`);
                         }
                     });
-                    
+
                     if (m.categories.length > 0) {
                         NotificationManager.info(`${m.categories.length} catégorie(s) détectée(s): ${m.categories.join(', ')}`);
                     }
                 }, 200);
             }
         }
-        
+
         // Show success message with confidence level
         if (confidence >= 80) {
             NotificationManager.success(`Analyse IA complète! Confiance élevée (${confidence}%). Vérifiez les mappings suggérés.`);
@@ -1930,7 +1945,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         // Get selected sheet from mapping mode
         const sheetSelector = document.getElementById('mapping-select-sheet');
         const sheetName = sheetSelector ? sheetSelector.value : null;
-        
+
         console.log(`[loadExcelColumns] Sheet sélectionné: ${sheetName}`);
 
         // Build URL with sheet parameter
@@ -2305,7 +2320,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
 
     function sendToDhis2() {
         NotificationManager.warning('Envoi vers DHIS2 en cours...', 'Confirmation');
-        
+
         setTimeout(() => {
             LoadingOverlay.show('Envoi vers DHIS2 en cours...');
 
@@ -2324,12 +2339,13 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                                 'Détails de l\'import'
                             );
                         }
-                } else {
-                    NotificationManager.error(data.error || 'Erreur lors de l\'envoi');
-                }
-            })
-            .catch(e => NotificationManager.error('Erreur réseau'))
-            .finally(() => LoadingOverlay.hide());
+                    } else {
+                        NotificationManager.error(data.error || 'Erreur lors de l\'envoi');
+                    }
+                })
+                .catch(e => NotificationManager.error('Erreur réseau'))
+                .finally(() => LoadingOverlay.hide());
+        }, 100);
     }
 
     // Load Excel sheets
@@ -2384,12 +2400,12 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 });
 
                 // Auto-reload columns when sheet changes
-                select.addEventListener('change', function() {
+                select.addEventListener('change', function () {
                     loadExcelColumns();
                 });
 
                 console.log(`[Mapping] Onglets chargés: ${data.sheets.join(', ')}`);
-                
+
                 // Charger les colonnes du premier onglet par défaut
                 loadExcelColumns();
             }
@@ -2459,7 +2475,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
 
     function showPivotedMappingInterface(data) {
         pivotedData = data;
-        
+
         // Hide normal mapping, show pivoted
         document.getElementById('mapping-config').classList.add('hidden');
         document.getElementById('pivoted-mapping').classList.remove('hidden');
@@ -2477,9 +2493,9 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         for (const [sectionName, dataElements] of Object.entries(data.sections_mapping)) {
             const sectionDiv = document.createElement('div');
             sectionDiv.className = 'mb-8';
-            
+
             const matchedCount = dataElements.filter(de => de.dhis2_matched).length;
-            
+
             sectionDiv.innerHTML = `
                 <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-folder-open text-purple-600"></i>
@@ -2488,9 +2504,9 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 </h3>
                 <div class="space-y-3">
                     ${dataElements.map((de, idx) => {
-                        const isMatched = de.dhis2_matched;
-                        const uniqueId = `pivot-${sectionName.replace(/[^a-zA-Z0-9]/g, '_')}-${idx}`;
-                        return `
+                const isMatched = de.dhis2_matched;
+                const uniqueId = `pivot-${sectionName.replace(/[^a-zA-Z0-9]/g, '_')}-${idx}`;
+                return `
                         <div class="flex items-center gap-4 p-4 ${isMatched ? 'bg-green-50 border-2 border-green-200' : 'bg-gray-50'} rounded-lg">
                             <div class="flex-1">
                                 <div class="font-semibold text-gray-900">${de.name}</div>
@@ -2527,16 +2543,16 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                                 `}
                             </div>
                             <div class="w-24 text-center">
-                                ${isMatched ? 
-                                    '<span class="px-3 py-1 text-xs font-bold rounded-full bg-green-600 text-white">AUTO</span>' :
-                                    '<span class="px-3 py-1 text-xs font-bold rounded-full bg-orange-500 text-white">MANUEL</span>'
-                                }
+                                ${isMatched ?
+                        '<span class="px-3 py-1 text-xs font-bold rounded-full bg-green-600 text-white">AUTO</span>' :
+                        '<span class="px-3 py-1 text-xs font-bold rounded-full bg-orange-500 text-white">MANUEL</span>'
+                    }
                             </div>
                         </div>
                     `}).join('')}
                 </div>
             `;
-            
+
             container.appendChild(sectionDiv);
         }
 
@@ -2555,14 +2571,14 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         // Simple fuzzy matching
         document.querySelectorAll('select[id^="pivot-"]').forEach(select => {
             const deName = select.dataset.deName.toLowerCase().trim();
-            
+
             // Find best match
             let bestMatch = null;
             let bestScore = 0;
 
             dhis2DataElements.forEach(dhis2De => {
                 const dhis2Name = dhis2De.name.toLowerCase().trim();
-                
+
                 // Exact match
                 if (dhis2Name === deName) {
                     bestMatch = dhis2De;
@@ -2594,7 +2610,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         // Check all selects (manual mapping) and hidden inputs (auto-matched)
         document.querySelectorAll('[id^="pivot-"]').forEach(input => {
             const value = input.value;
-            
+
             if (!value) {
                 if (input.tagName === 'SELECT') {
                     input.classList.add('border-red-500');
@@ -2604,7 +2620,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 if (input.tagName === 'SELECT') {
                     input.classList.remove('border-red-500');
                 }
-                
+
                 mapping.push({
                     extracted_de: input.dataset.deName,
                     column: input.dataset.column,
@@ -2620,10 +2636,10 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         }
 
         console.log('Pivoted mapping validated:', mapping);
-        
+
         // TODO: Process the pivoted data with mapping
         LoadingOverlay.show('Traitement du format pivoté en cours...');
-        
+
         // For now, just show success
         setTimeout(() => {
             LoadingOverlay.hide();
@@ -2669,7 +2685,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
     }
 
     // Analyze TCD File
-    document.getElementById('btn-analyze-tcd')?.addEventListener('click', async function() {
+    document.getElementById('btn-analyze-tcd')?.addEventListener('click', async function () {
         LoadingOverlay.show('Analyse du fichier TCD en cours...');
 
         try {
@@ -2704,12 +2720,12 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             const option = document.createElement('option');
             option.value = sheet;
             option.textContent = sheet;
-            
+
             const analysis = data.sheets_analysis[sheet];
             if (analysis) {
                 option.textContent += ` (${analysis.lignes} lignes)`;
             }
-            
+
             select.appendChild(option);
         });
 
@@ -2719,15 +2735,15 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
     // On TCD Sheet Change
     function onTCDSheetChange() {
         const sheetName = document.getElementById('tcd-sheet').value;
-        
+
         if (!sheetName || !tcdAnalysisData) return;
 
         const analysis = tcdAnalysisData.sheets_analysis[sheetName];
-        
+
         if (!analysis) return;
 
         // Show sheet info
-        document.getElementById('tcd-sheet-info').textContent = 
+        document.getElementById('tcd-sheet-info').textContent =
             `${analysis.lignes} lignes, ${analysis.cols_categories.length} colonnes de catégories`;
 
         // Populate data element column selector
@@ -2744,10 +2760,10 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
 
     // TCD Org Mode Switching
     document.querySelectorAll('input[name="tcd-org-mode"]').forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', function () {
             const fixedSection = document.getElementById('tcd-fixed-org-section');
             const orgMappingContainer = document.getElementById('tcd-org-mapping-container');
-            
+
             if (this.value === 'fixed') {
                 fixedSection.classList.remove('hidden');
                 orgMappingContainer?.classList.add('hidden');
@@ -2762,14 +2778,14 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
     // Load organizations for TCD fixed mode
     async function loadOrganizationsForTCD() {
         const select = document.getElementById('tcd-fixed-org');
-        
+
         try {
             const response = await fetch('/calculator/api/get-org-units');
             const data = await response.json();
-            
+
             if (data.success) {
                 select.innerHTML = '<option value="">-- Sélectionnez une organisation --</option>';
-                
+
                 data.org_units.forEach(org => {
                     const option = document.createElement('option');
                     option.value = org.id;
@@ -2783,7 +2799,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
     }
 
     // Generate Mapping Suggestions
-    document.getElementById('btn-tcd-suggestions')?.addEventListener('click', async function() {
+    document.getElementById('btn-tcd-suggestions')?.addEventListener('click', async function () {
         const sheetName = document.getElementById('tcd-sheet').value;
         const colDE = document.getElementById('tcd-col-de').value;
 
@@ -2825,7 +2841,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
     // Display TCD Mapping Suggestions
     function displayTCDMappingSuggestions(suggestions) {
         const orgMode = document.querySelector('input[name="tcd-org-mode"]:checked').value;
-        
+
         // Data Elements Mapping
         const deList = document.getElementById('tcd-de-mapping-list');
         deList.innerHTML = '';
@@ -2833,9 +2849,9 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         Object.entries(suggestions.data_elements || {}).forEach(([valTCD, info]) => {
             const div = document.createElement('div');
             div.className = 'bg-white border border-gray-200 rounded-lg p-4';
-            
+
             const confidence = info.confidence === 'high' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
-            
+
             div.innerHTML = `
                 <div class="flex items-center justify-between mb-2">
                     <div class="font-bold text-gray-900">${valTCD}</div>
@@ -2844,7 +2860,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 <div class="text-sm text-gray-600">→ ${info.suggested}</div>
                 <input type="hidden" class="tcd-de-mapping" data-tcd-value="${valTCD}" value="${info.suggested}">
             `;
-            
+
             deList.appendChild(div);
         });
 
@@ -2856,9 +2872,9 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             Object.entries(suggestions.etablissements || {}).forEach(([valTCD, info]) => {
                 const div = document.createElement('div');
                 div.className = 'bg-white border border-gray-200 rounded-lg p-4';
-                
+
                 const confidence = info.confidence === 'high' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
-                
+
                 div.innerHTML = `
                     <div class="flex items-center justify-between mb-2">
                         <div class="font-bold text-gray-900">${valTCD}</div>
@@ -2867,14 +2883,14 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     <div class="text-sm text-gray-600">→ ${info.suggested}</div>
                     <input type="hidden" class="tcd-org-mapping" data-tcd-value="${valTCD}" value="${info.suggested}">
                 `;
-                
+
                 orgList.appendChild(div);
             });
         }
     }
 
     // Process TCD
-    document.getElementById('btn-tcd-process')?.addEventListener('click', async function() {
+    document.getElementById('btn-tcd-process')?.addEventListener('click', async function () {
         const sheetName = document.getElementById('tcd-sheet').value;
         const colDE = document.getElementById('tcd-col-de').value;
         const period = document.getElementById('tcd-period').value;
@@ -2967,8 +2983,8 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         document.getElementById('tcd-report-section').classList.remove('hidden');
 
         // Show errors if any
-        const hasErrors = Object.keys(stats.etablissements_non_mappes || {}).length > 0 || 
-                         Object.keys(stats.data_elements_non_mappes || {}).length > 0;
+        const hasErrors = Object.keys(stats.etablissements_non_mappes || {}).length > 0 ||
+            Object.keys(stats.data_elements_non_mappes || {}).length > 0;
 
         if (hasErrors) {
             document.getElementById('tcd-errors-container').classList.remove('hidden');
@@ -3005,8 +3021,8 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             document.getElementById('stat-total').textContent = data.total_values;
             document.getElementById('stat-valid').textContent = stats.valeurs_inserees;
             document.getElementById('stat-errors').textContent = stats.lignes_traitees - stats.valeurs_inserees;
-            
-            document.getElementById('json-info').textContent = 
+
+            document.getElementById('json-info').textContent =
                 `Fichier: ${data.json_filename} (${data.total_values} valeurs)`;
         }
     }
@@ -3026,40 +3042,40 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
     let autoTCDEtabsCodes = {};  // {nom: code}
 
     // Upload Template
-    document.getElementById('auto-template-input')?.addEventListener('change', async function(e) {
+    document.getElementById('auto-template-input')?.addEventListener('change', async function (e) {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         // Upload le template au serveur
         const formData = new FormData();
         formData.append('file', file);
-        
+
         try {
             const response = await fetch('/calculator/api/upload-template', {
                 method: 'POST',
                 body: formData
             });
-            
+
             const result = await response.json();
-            
+
             if (response.ok) {
                 autoTemplateFile = result.filepath;
                 autoTemplateOrgs = result.organisations_uniques || [];
                 autoTemplateOrgsCodes = result.organisations_avec_codes || {};
                 autoTemplateSectionsDE = result.sections_de || {};
-                
+
                 // Afficher les infos du template
                 document.getElementById('auto-template-info').classList.remove('hidden');
                 document.getElementById('auto-template-filename').textContent = file.name;
                 document.getElementById('auto-template-rows').textContent = result.rows || '...';
                 document.getElementById('auto-template-orgs').textContent = result.orgs || '...';
-                
+
                 // Afficher étape 2
                 document.getElementById('auto-step2').classList.remove('hidden');
-                
+
                 // Initialiser le Dropzone TCD
                 initializeAutoTCDDropzone();
-                
+
                 NotificationManager.success('Template chargé avec succès');
             } else {
                 NotificationManager.error(result.error || 'Erreur lors du chargement du template');
@@ -3075,9 +3091,9 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         if (autoTCDDropzone) {
             autoTCDDropzone.destroy();
         }
-        
+
         Dropzone.autoDiscover = false;
-        
+
         autoTCDDropzone = new Dropzone("#auto-tcd-dropzone", {
             url: "{{ url_for('calculator.upload_excel') }}",
             maxFiles: 1,
@@ -3085,30 +3101,30 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             acceptedFiles: '.xlsx,.xls',
             addRemoveLinks: true,
             dictDefaultMessage: '',
-            init: function() {
-                this.on("success", async function(file, response) {
+            init: function () {
+                this.on("success", async function (file, response) {
                     console.log('[Auto] TCD uploadé:', response);
-                    
+
                     // Analyser le TCD
                     try {
                         const analyzeResponse = await fetch('/calculator/api/auto/analyze-tcd', {
                             method: 'POST',
-                            headers: {'Content-Type': 'application/json'}
+                            headers: { 'Content-Type': 'application/json' }
                         });
-                        
+
                         const data = await analyzeResponse.json();
-                        
+
                         if (data.success) {
                             autoTCDAnalysis = data;
                             autoTCDEtablissements = data.etablissements_uniques || [];
                             autoTCDEtabsCodes = data.etablissements_avec_codes || {};
                             autoTCDValeursDE = data.valeurs_de_uniques || [];
-                            
+
                             // Afficher info fichier
                             document.getElementById('auto-tcd-info').classList.remove('hidden');
                             document.getElementById('auto-tcd-filename').textContent = response.filename;
                             document.getElementById('auto-tcd-sheets').textContent = data.sheet_count;
-                            
+
                             // Remplir le select des onglets
                             const sheetSelect = document.getElementById('auto-sheet-select');
                             sheetSelect.innerHTML = '<option value="">-- Sélectionnez un onglet --</option>';
@@ -3118,10 +3134,10 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                                 option.textContent = `${sheet.name} (${sheet.rows} lignes)`;
                                 sheetSelect.appendChild(option);
                             });
-                            
+
                             // Afficher étape 3
                             document.getElementById('auto-step3').classList.remove('hidden');
-                            
+
                             NotificationManager.success(`TCD analysé: ${data.sheet_count} onglets trouvés`);
                         } else {
                             NotificationManager.error('Erreur analyse TCD: ' + data.error);
@@ -3131,8 +3147,8 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                         NotificationManager.error('Erreur lors de l\'analyse du TCD');
                     }
                 });
-                
-                this.on("error", function(file, message) {
+
+                this.on("error", function (file, message) {
                     console.error('[Auto] Erreur upload TCD:', message);
                     NotificationManager.error('Erreur upload: ' + (message.error || message));
                 });
@@ -3141,17 +3157,17 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
     }
 
     // Changement d'onglet
-    document.getElementById('auto-sheet-select')?.addEventListener('change', function() {
+    document.getElementById('auto-sheet-select')?.addEventListener('change', function () {
         const sheetName = this.value;
         if (!sheetName || !autoTCDAnalysis) return;
-        
+
         const sheet = autoTCDAnalysis.sheets.find(s => s.name === sheetName);
         if (!sheet) return;
-        
+
         // Afficher info onglet
-        document.getElementById('auto-sheet-info').textContent = 
+        document.getElementById('auto-sheet-info').textContent =
             `${sheet.rows} lignes détectées`;
-        
+
         // Remplir select colonnes data element
         const colSelect = document.getElementById('auto-col-de');
         colSelect.innerHTML = '<option value="">-- Sélectionnez la colonne --</option>';
@@ -3161,7 +3177,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             option.textContent = col;
             colSelect.appendChild(option);
         });
-        
+
         // Remplir select colonne code établissement
         const colCodeSelect = document.getElementById('auto-col-code-etab');
         colCodeSelect.innerHTML = '<option value="">-- Aucun (pas de mapping auto) --</option>';
@@ -3175,54 +3191,54 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             }
             colCodeSelect.appendChild(option);
         });
-        
+
         // Cacher l'étape 4 en attendant la sélection de la colonne
         document.getElementById('auto-step4').classList.add('hidden');
     });
-    
+
     // Changement de colonne data element
-    document.getElementById('auto-col-de')?.addEventListener('change', async function() {
+    document.getElementById('auto-col-de')?.addEventListener('change', async function () {
         const colName = this.value;
         const sheetName = document.getElementById('auto-sheet-select').value;
         const colCode = document.getElementById('auto-col-code-etab').value;
-        
+
         if (!colName || !sheetName) return;
-        
+
         try {
             // Extraire les valeurs uniques de cette colonne
             const response = await fetch('/calculator/api/auto/extract-tcd-values', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     sheet_name: sheetName,
                     column_name: colName,
                     column_code: colCode
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 autoTCDValeursDE = data.valeurs || [];
                 autoTCDEtablissements = data.etablissements_uniques || [];
                 autoTCDEtabsCodes = data.etablissements_avec_codes || {};
-                
+
                 console.log('Établissements TCD:', autoTCDEtablissements.length);
                 console.log('Codes TCD:', Object.keys(autoTCDEtabsCodes).length);
                 console.log('Codes Template:', Object.keys(autoTemplateOrgsCodes).length);
-                
+
                 // Afficher étape 4
                 document.getElementById('auto-step4').classList.remove('hidden');
-                
+
                 // Initialiser les mappings maintenant que nous avons toutes les données
                 setTimeout(() => {
                     // Effacer les conteneurs
                     document.getElementById('auto-org-mappings').innerHTML = '';
                     document.getElementById('auto-de-mappings').innerHTML = '';
-                    
+
                     // Faire le mapping automatique des établissements par code
                     autoMapOrganisationsByCode();
-                    
+
                     // Ajouter un mapping vide pour les autres
                     addAutoOrgMapping();
                     addAutoDEMapping();
@@ -3243,10 +3259,10 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         for (const [nom, code] of Object.entries(autoTemplateOrgsCodes)) {
             templateCodeToName[code] = nom;
         }
-        
+
         let mappedCount = 0;
         let unmappedTCD = [];
-        
+
         // Pour chaque établissement TCD
         for (const [nomTCD, codeTCD] of Object.entries(autoTCDEtabsCodes)) {
             // Chercher le matching dans le template par code
@@ -3260,12 +3276,12 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 unmappedTCD.push(nomTCD);
             }
         }
-        
+
         // Afficher un message sur les mappings automatiques
         if (mappedCount > 0) {
             NotificationManager.success(`${mappedCount} établissement(s) mappé(s) automatiquement par code`);
         }
-        
+
         if (unmappedTCD.length > 0) {
             NotificationManager.warning(`${unmappedTCD.length} établissement(s) nécessitent un mapping manuel`);
         }
@@ -3276,20 +3292,20 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         const container = document.getElementById('auto-org-mappings');
         const div = document.createElement('div');
         div.className = 'grid grid-cols-[1fr_1fr_auto] gap-4 items-center';
-        
+
         // Créer les options pour les selects
         let tcdOptions = '<option value="">-- Établissement TCD --</option>';
         autoTCDEtablissements.forEach(etab => {
             const selected = etab === acronyme ? 'selected' : '';
             tcdOptions += `<option value="${etab}" ${selected}>${etab}</option>`;
         });
-        
+
         let templateOptions = '<option value="">-- Organisation Template --</option>';
         autoTemplateOrgs.forEach(org => {
             const selected = org === pattern ? 'selected' : '';
             templateOptions += `<option value="${org}" ${selected}>${org}</option>`;
         });
-        
+
         div.innerHTML = `
             <select class="form-input auto-org-acronyme">${tcdOptions}</select>
             <select class="form-input auto-org-pattern">${templateOptions}</select>
@@ -3305,21 +3321,21 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         const container = document.getElementById('auto-de-mappings');
         const div = document.createElement('div');
         div.className = 'grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-center';
-        
+
         // Créer les options pour valeur TCD
         let valeurOptions = '<option value="">-- Valeur TCD --</option>';
         autoTCDValeursDE.forEach(val => {
             const selected = val === valeur ? 'selected' : '';
             valeurOptions += `<option value="${val}" ${selected}>${val}</option>`;
         });
-        
+
         // Créer les options pour sections
         let sectionOptions = '<option value="">-- Section --</option>';
         Object.keys(autoTemplateSectionsDE).forEach(sec => {
             const selected = sec === section ? 'selected' : '';
             sectionOptions += `<option value="${sec}" ${selected}>${sec}</option>`;
         });
-        
+
         // Créer le select DE (vide au départ, rempli quand section choisie)
         let deOptions = '<option value="">-- Data Element --</option>';
         if (section && autoTemplateSectionsDE[section]) {
@@ -3328,7 +3344,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 deOptions += `<option value="${dataElem}" ${selected}>${dataElem}</option>`;
             });
         }
-        
+
         div.innerHTML = `
             <select class="form-input auto-de-valeur">${valeurOptions}</select>
             <select class="form-input auto-de-section">${sectionOptions}</select>
@@ -3338,15 +3354,15 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             </button>
         `;
         container.appendChild(div);
-        
+
         // Ajouter l'événement pour filtrer les DE quand section change
         const sectionSelect = div.querySelector('.auto-de-section');
         const deSelect = div.querySelector('.auto-de-name');
-        
-        sectionSelect.addEventListener('change', function() {
+
+        sectionSelect.addEventListener('change', function () {
             const selectedSection = this.value;
             deSelect.innerHTML = '<option value="">-- Data Element --</option>';
-            
+
             if (selectedSection && autoTemplateSectionsDE[selectedSection]) {
                 autoTemplateSectionsDE[selectedSection].forEach(dataElem => {
                     const option = document.createElement('option');
@@ -3363,12 +3379,12 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         const sheetName = document.getElementById('auto-sheet-select').value;
         const colDE = document.getElementById('auto-col-de').value;
         const period = document.getElementById('auto-period').value;
-        
+
         if (!autoTemplateFile || !sheetName || !colDE || !period) {
             NotificationManager.error('Veuillez remplir tous les champs requis');
             return;
         }
-        
+
         // Récupérer les mappings
         const etablissements_patterns = {};
         document.querySelectorAll('#auto-org-mappings > div').forEach(div => {
@@ -3378,7 +3394,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 etablissements_patterns[acronyme] = pattern;
             }
         });
-        
+
         const data_elements_manuels = {};
         document.querySelectorAll('#auto-de-mappings > div').forEach(div => {
             const valeur = div.querySelector('.auto-de-valeur').value.trim();
@@ -3388,23 +3404,23 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 data_elements_manuels[valeur] = [section, deName];
             }
         });
-        
+
         if (Object.keys(etablissements_patterns).length === 0) {
             NotificationManager.error('Veuillez ajouter au moins un mapping établissement');
             return;
         }
-        
+
         if (Object.keys(data_elements_manuels).length === 0) {
             NotificationManager.error('Veuillez ajouter au moins un mapping data element');
             return;
         }
-        
+
         LoadingOverlay.show('Traitement en cours...');
-        
+
         try {
             const response = await fetch('/calculator/api/auto/process', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     tcd_sheet: sheetName,
                     col_data_element: colDE,
@@ -3415,26 +3431,26 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     }
                 })
             });
-            
+
             const data = await response.json();
-            
+
             LoadingOverlay.hide();
-            
+
             if (data.success) {
                 // Afficher le rapport
                 displayAutoReport(data);
-                
+
                 // Afficher étape 5
                 document.getElementById('auto-step5').classList.remove('hidden');
-                
+
                 // Afficher la section download avec boutons d'action
                 document.getElementById('download-section').classList.remove('hidden');
-                document.getElementById('json-info').textContent = 
+                document.getElementById('json-info').textContent =
                     `Fichier: ${data.json_filename} (${data.total_values} valeurs)`;
-                
+
                 // Scroller vers le rapport
                 document.getElementById('auto-step5').scrollIntoView({ behavior: 'smooth' });
-                
+
                 NotificationManager.success(`Traitement terminé: ${data.total_values} valeurs générées`);
             } else {
                 NotificationManager.error('Erreur: ' + data.error);
@@ -3453,21 +3469,21 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
     // Afficher rapport
     function displayAutoReport(data) {
         const stats = data.stats;
-        
+
         // Statistiques
         document.getElementById('auto-stat-lignes').textContent = stats.lignes_traitees || 0;
         document.getElementById('auto-stat-valeurs').textContent = stats.valeurs_inserees || 0;
         document.getElementById('auto-stat-org-nm').textContent = Object.keys(stats.etablissements_non_mappes || {}).length;
         document.getElementById('auto-stat-de-nm').textContent = Object.keys(stats.data_elements_non_mappes || {}).length;
-        
+
         // Erreurs
         const hasErrors = (stats.etablissements_non_mappes && Object.keys(stats.etablissements_non_mappes).length > 0) ||
-                         (stats.data_elements_non_mappes && Object.keys(stats.data_elements_non_mappes).length > 0) ||
-                         (stats.combinaisons_non_trouvees && stats.combinaisons_non_trouvees.length > 0);
-        
+            (stats.data_elements_non_mappes && Object.keys(stats.data_elements_non_mappes).length > 0) ||
+            (stats.combinaisons_non_trouvees && stats.combinaisons_non_trouvees.length > 0);
+
         if (hasErrors) {
             document.getElementById('auto-errors-container').classList.remove('hidden');
-            
+
             // Orgs non mappées
             if (stats.etablissements_non_mappes && Object.keys(stats.etablissements_non_mappes).length > 0) {
                 document.getElementById('auto-unmapped-orgs').classList.remove('hidden');
@@ -3479,7 +3495,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     list.appendChild(p);
                 }
             }
-            
+
             // DEs non mappés
             if (stats.data_elements_non_mappes && Object.keys(stats.data_elements_non_mappes).length > 0) {
                 document.getElementById('auto-unmapped-des').classList.remove('hidden');
@@ -3491,7 +3507,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     list.appendChild(p);
                 }
             }
-            
+
             // Combinaisons non trouvées
             if (stats.combinaisons_non_trouvees && stats.combinaisons_non_trouvees.length > 0) {
                 document.getElementById('auto-not-found').classList.remove('hidden');
@@ -3504,7 +3520,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 });
             }
         }
-        
+
         // Preview
         if (data.preview && data.preview.length > 0) {
             const tbody = document.getElementById('auto-preview-tbody');

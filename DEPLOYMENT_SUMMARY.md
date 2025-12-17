@@ -54,8 +54,8 @@ chmod +x cleanup.sh
 # Copier template
 cp .env.example .env
 
-# Générer SECRET_KEY
-python -c "import secrets; print(secrets.token_hex(32))"
+# Générer SECRET_KEY (choisir selon votre version Python)
+python -c "import os, binascii; print(binascii.hexlify(os.urandom(32)).decode())"
 
 # Éditer .env et coller la clé
 nano .env
