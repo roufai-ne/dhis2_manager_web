@@ -278,16 +278,19 @@ class AutoProcessor:
         # Construire le mapping avec les patterns fournis
         self.mapping_etablissements = {}
         for acronyme, pattern in self.config.etablissements_patterns.items():
+            # CRITIQUE: Toujours stripper la clé de configuration (acronyme TCD)
+            clean_acronyme = str(acronyme).strip()
+            
             for nom_norm, nom_original in noms_template.items():
                 if pattern.lower() in nom_norm.lower():
-                    self.mapping_etablissements[acronyme] = nom_original
-                    logger.debug(f"Mapping trouvé: '{acronyme}' -> '{nom_original}'")
+                    self.mapping_etablissements[clean_acronyme] = nom_original
+                    logger.debug(f"Mapping trouvé: '{clean_acronyme}' -> '{nom_original}'")
                     break
         
         logger.info(f"Mappings établissements construits: {len(self.mapping_etablissements)}")
         if len(self.mapping_etablissements) < len(self.config.etablissements_patterns):
             logger.warning("Certains patterns n'ont pas trouvé de correspondance dans le template")
-    
+
     def build_index_recherche(self):
         """
         Construit un index de recherche rapide basé sur des clés normalisées.
@@ -471,7 +474,7 @@ class AutoProcessor:
         logger.info("=" * 80)
         
         return data_values, self.stats
-    
+
     def analyze_tcd_file(self, tcd_path: str) -> Dict:
         """
         Analyse un fichier TCD et retourne la structure.
@@ -494,7 +497,11 @@ class AutoProcessor:
                 # Pour le premier onglet, extraire les établissements uniques avec leurs codes
                 if idx == 0:
                     if self.config.col_etablissement in df.columns:
-                        etablissements_uniques = sorted([str(v) for v in df[self.config.col_etablissement].dropna().unique()])
+                        # CRITIQUE: Stripper les noms d'établissements extraits
+                        etablissements_uniques = sorted([
+                            str(v).strip() 
+                            for v in df[self.config.col_etablissement].dropna().unique()
+                        ])
                     
                     # Extraire aussi les codes si la colonne existe
                     if self.config.col_code_etablissement in df.columns and self.config.col_etablissement in df.columns:

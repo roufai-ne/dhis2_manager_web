@@ -263,6 +263,110 @@ def process_template():
         return jsonify({'error': f'Erreur serveur: {str(e)}'}), 500
 
 
+@bp.route('/api/process-custom', methods=['POST'])
+def process_custom():
+    """
+    Traite un fichier Excel avec mapping personnalisé
+    
+    Returns:
+        JSON avec statistiques et preview
+    """
+    if 'metadata' not in session:
+        return jsonify({'error': 'Métadonnées non chargées'}), 400
+
+    if 'excel_file' not in session:
+        return jsonify({'error': 'Aucun fichier uploadé'}), 400
+
+    try:
+        data = request.get_json() or {}
+        
+        # Récupérer les paramètres
+        dataset_id = data.get('dataset_id')
+        period = data.get('period')
+        processing_mode = data.get('processing_mode', 'values')
+        
+        # Mapping configuration
+        org_column = data.get('org_column')
+        org_mode = data.get('org_mode', 'column')
+        fixed_org_unit = data.get('fixed_org_unit')
+        
+        category_mapping = data.get('category_mapping', {})
+        data_element_mapping = data.get('data_element_mapping', {})
+        org_unit_mapping = data.get('org_unit_mapping', {})  # Nouveau: mapping manuel {valeur: code}
+        
+        # Validation
+        if not dataset_id or not period:
+            return jsonify({'error': 'Paramètres manquants (dataset ou période)'}), 400
+            
+        if org_mode == 'column' and not org_column:
+            return jsonify({'error': 'Colonne organisation manquante'}), 400
+            
+        if org_mode == 'fixed' and not fixed_org_unit:
+            return jsonify({'error': 'Organisation fixe manquante'}), 400
+
+        # Récupérer les services
+        metadata = get_metadata_from_session()
+        filepath = session['excel_file']
+        
+        from app.services.data_calculator_mapping import process_mapped_excel
+        
+        logger.info(f"Traitement mapping custom: Dataset={dataset_id}, Period={period}")
+        
+        # Traiter le fichier
+        data_values, stats = process_mapped_excel(
+            metadata_manager=metadata,
+            filepath=filepath,
+            org_column=org_column,
+            category_mapping=category_mapping,
+            data_element_mapping=data_element_mapping,
+            dataset_id=dataset_id,
+            period=period,
+            processing_mode=processing_mode,
+            fixed_org_unit=fixed_org_unit if org_mode == 'fixed' else None,
+            org_unit_mapping=org_unit_mapping
+        )
+        
+        from app.services.data_calculator import DataCalculator
+        calculator = DataCalculator(metadata)
+        
+        # Générer le payload
+        payload = calculator.generate_dhis2_payload(data_values)
+        
+        # Valider
+        valid, errors = calculator.validate_payload(payload)
+        
+        if not valid:
+            logger.warning(f"Payload invalide: {errors}")
+            return jsonify({
+                'error': 'Payload invalide',
+                'details': errors
+            }), 400
+        
+        # Sauvegarder le payload
+        project_root = Path(__file__).parent.parent.parent
+        session_dir = project_root / 'sessions' / session.sid
+        json_filename = f"DHIS2_Import_Custom_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        json_filepath = session_dir / json_filename
+        
+        with open(json_filepath, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, indent=2, ensure_ascii=False)
+        
+        session['json_file'] = str(json_filepath)
+        session['json_filename'] = json_filename
+        
+        return jsonify({
+            'success': True,
+            'stats': stats,
+            'preview': data_values[:10],
+            'total_values': len(data_values),
+            'json_filename': json_filename
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erreur traitement custom: {e}", exc_info=True)
+        return jsonify({'error': f'Erreur serveur: {str(e)}'}), 500
+
+
 @bp.route('/api/download-json', methods=['GET'])
 def download_json():
     """

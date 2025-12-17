@@ -27,7 +27,8 @@ def process_mapped_excel(
     data_element_column: Optional[str] = None,
     value_to_de_mapping: Optional[Dict[str, str]] = None,
     fixed_org_unit: Optional[str] = None,
-    sheet_name: Optional[str] = None
+    sheet_name: Optional[str] = None,
+    org_unit_mapping: Optional[Dict[str, str]] = None
 ) -> Tuple[List[Dict], Dict]:
     """
     Traite un fichier Excel avec mapping explicite des data elements
@@ -45,6 +46,7 @@ def process_mapped_excel(
         value_to_de_mapping: (Mode count) Mapping valeur -> DE ID
         fixed_org_unit: (Optionnel) ID DHIS2 de l'org unit fixe si mode valeur fixe
         sheet_name: (Optionnel) Nom de l'onglet à lire
+        org_unit_mapping: (Optionnel) Mapping manuel {valeur_excel: code_dhis2}
 
     Returns:
         Tuple (liste de dataValues, statistiques)
@@ -83,7 +85,8 @@ def process_mapped_excel(
     else:
         return _process_values_mode(
             metadata_manager, df, org_column, category_mapping,
-            data_element_mapping, dataset_id, period, fixed_org_unit
+            data_element_mapping, dataset_id, period, fixed_org_unit,
+            org_unit_mapping
         )
 
 
@@ -95,7 +98,8 @@ def _process_values_mode(
     data_element_mapping: Dict[str, str],
     dataset_id: str,
     period: str,
-    fixed_org_unit: Optional[str] = None
+    fixed_org_unit: Optional[str] = None,
+    org_unit_mapping: Optional[Dict[str, str]] = None
 ) -> Tuple[List[Dict], Dict]:
     """
     Mode Valeurs: Traite un fichier avec valeurs numériques pré-agrégées
@@ -158,16 +162,34 @@ def _process_values_mode(
             # Mode valeur fixe
             org_id = fixed_org_unit
         else:
-            # Mode colonne
-            org_value = str(row[org_column]).strip()
+            # Mode colonne avec gestion avancée des types (float -> str)
+            raw_org = row[org_column]
+            
+            if isinstance(raw_org, float) and raw_org.is_integer():
+                org_value = str(int(raw_org))
+            else:
+                org_value = str(raw_org).strip()
+                
             org_key = org_value.lower()
+            org_id = None
 
-            # Essayer d'abord par code (plus fiable)
-            org_id = metadata_manager.org_code_to_id.get(org_key)
+            # 1. Vérifier le mapping manuel
+            # Le mapping manuel contient {valeur_excel: code_dhis2}
+            if org_unit_mapping and org_value in org_unit_mapping:
+                mapped_code = org_unit_mapping[org_value]
+                # Résoudre le code mappé en ID
+                org_id = metadata_manager.org_code_to_id.get(str(mapped_code).lower().strip())
+                if not org_id:
+                    logger.warning(f"Ligne {idx+2}: Code mappé manuellement introuvable dans DHIS2: {mapped_code} (mapping: {org_value} -> {mapped_code})")
 
-            # Fallback sur le nom si code non trouvé
+            # 2. Si pas de mapping manuel ou mapping échoué, utiliser la logique standard
             if not org_id:
-                org_id = metadata_manager.org_name_to_id.get(org_key)
+                # Essayer d'abord par code (plus fiable)
+                org_id = metadata_manager.org_code_to_id.get(org_key)
+
+                # Fallback sur le nom si code non trouvé
+                if not org_id:
+                    org_id = metadata_manager.org_name_to_id.get(org_key)
 
             if not org_id:
                 errors['org_not_found'] += 1
