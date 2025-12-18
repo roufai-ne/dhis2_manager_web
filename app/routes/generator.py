@@ -10,6 +10,7 @@ from datetime import datetime
 from app.services.metadata_manager import MetadataManager
 from app.services.template_generator import TemplateGenerator, TemplateConfig
 from app.services.excel_service import ExcelService
+from app.utils.activity_logger import log_activity
 
 bp = Blueprint('generator', __name__, url_prefix='/generator')
 logger = logging.getLogger(__name__)
@@ -207,6 +208,7 @@ def generate_template():
         )
         
         logger.info(f"Template généré: {filename} ({stats.get('total_rows')} lignes)")
+        log_activity(f"Génération template Excel - Dataset: {dataset_name}, Période: {period}, Organisations: {len(org_unit_ids)}, Lignes: {stats.get('total_rows')}", 'info')
         
         # Retourner le fichier
         return send_file(
@@ -293,6 +295,7 @@ def generate_csv_names():
         df.to_csv(str(filepath), index=False, encoding='utf-8-sig')
 
         logger.info(f"CSV (noms) généré: {filename} ({stats.get('total_rows')} lignes)")
+        log_activity(f"Génération CSV noms - Dataset: {dataset_name}, Période: {period}, Organisations: {len(org_unit_ids)}, Lignes: {stats.get('total_rows')}", 'info')
 
         return send_file(
             str(filepath),

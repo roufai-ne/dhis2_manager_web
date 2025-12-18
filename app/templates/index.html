@@ -331,7 +331,7 @@
             clearBtn.addEventListener('click', async function () {
                 NotificationManager.warning('Effacement des fichiers de session en cours...', 'Confirmation');
                 
-                setTimeout(() => {
+                setTimeout(async () => {
                     LoadingOverlay.show('Nettoyage de la session...');
                 try {
                     const response = await fetch("{{ url_for('configuration.clear_session_files') }}", {

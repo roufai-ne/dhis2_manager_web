@@ -72,6 +72,10 @@ class Config:
     LOG_FILE = os.environ.get('LOG_FILE', 'logs/app.log')
     LOG_MAX_BYTES = int(os.environ.get('LOG_MAX_BYTES', '10485760'))  # 10 MB
     LOG_BACKUP_COUNT = int(os.environ.get('LOG_BACKUP_COUNT', '10'))
+    
+    # Admin Configuration
+    ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme123')
 
     # Allowed Hosts (pour production)
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')

@@ -12,6 +12,7 @@ from pathlib import Path
 from app.services.session_manager import ensure_session_dir, cleanup_session_files
 from app.services.metadata_manager import MetadataManager
 from app.services.dhis2_api import DHIS2ApiService
+from app.utils.activity_logger import log_activity
 
 bp = Blueprint('configuration', __name__, url_prefix='/configuration')
 logger = logging.getLogger(__name__)
@@ -279,6 +280,7 @@ def fetch_dhis2_metadata():
         stats = manager.get_stats()
         
         logger.info(f"Métadonnées DHIS2 chargées: {stats}")
+        log_activity(f"Connexion DHIS2 réussie - URL: {url} - Stats: {stats}", 'info')
         
         return jsonify({
             'success': True,
@@ -297,6 +299,13 @@ def fetch_dhis2_metadata():
 @bp.route('/api/dhis2/disconnect', methods=['POST'])
 def disconnect_dhis2():
     """Déconnexion DHIS2 et nettoyage session"""
+    url = session.get('dhis2_url', 'unknown')
+    
+    # Logger AVANT de supprimer les infos de session
+    logger.info("Déconnexion DHIS2")
+    log_activity(f"Déconnexion DHIS2 - URL: {url}", 'info')
+    
+    # Maintenant supprimer les infos de session
     session.pop('dhis2_url', None)
     session.pop('dhis2_username', None)
     session.pop('dhis2_auth', None)
@@ -304,11 +313,8 @@ def disconnect_dhis2():
     session.pop('metadata', None)
     session.pop('metadata_file', None)
     
-    # Nettoyer les fichiers de session
-    session_id = session.get('_id', session.sid)
-    cleanup_session_files(session_id)
-    
-    logger.info("Déconnexion DHIS2")
+    # Note: Les fichiers Excel/JSON ne sont pas effacés lors de la déconnexion
+    # L'utilisateur peut les effacer manuellement avec le bouton "Tout effacer"
     
     return jsonify({'success': True, 'message': 'Déconnecté avec succès'})
 

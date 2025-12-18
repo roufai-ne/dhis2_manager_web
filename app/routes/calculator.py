@@ -17,6 +17,7 @@ from app.services.metadata_manager import MetadataManager
 from app.services.data_calculator import DataCalculator
 from app.services.file_handler import save_upload_file
 from app.services.auto_processor import AutoProcessor, AutoMappingConfig
+from app.utils.activity_logger import log_activity
 
 bp = Blueprint('calculator', __name__, url_prefix='/calculator')
 logger = logging.getLogger(__name__)
@@ -110,6 +111,7 @@ def upload_excel():
         session['excel_filename'] = filename
         
         logger.info(f"Fichier Excel uploadé avec succès: {filename}")
+        log_activity(f"Upload fichier Excel - Nom: {filename}", 'info')
         
         return jsonify({
             'success': True,
@@ -240,6 +242,7 @@ def process_template():
         session['json_filename'] = json_filename
         
         logger.info(f"Payload JSON généré: {json_filename} - {len(data_values)} valeurs")
+        log_activity(f"Traitement Template Excel - Onglet: {sheet_name}, Valeurs générées: {len(data_values)}", 'info')
         
         # Preview des premières lignes
         preview = data_values[:10]
@@ -353,6 +356,9 @@ def process_custom():
         
         session['json_file'] = str(json_filepath)
         session['json_filename'] = json_filename
+        
+        logger.info(f"Mapping custom terminé: {len(data_values)} valeurs")
+        log_activity(f"Mapping personnalisé - Dataset: {dataset_id}, Période: {period}, Valeurs: {len(data_values)}, Mode: {processing_mode}", 'info')
         
         return jsonify({
             'success': True,

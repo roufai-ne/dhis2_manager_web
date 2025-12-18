@@ -37,30 +37,33 @@ def create_app(config_name='default'):
     os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
     os.makedirs('logs', exist_ok=True)
     
-    # Configuration du logging
-    if not app.debug:
-        if not os.path.exists('logs'):
-            os.mkdir('logs')
-        file_handler = RotatingFileHandler(
-            'logs/dhis2_manager.log',
-            maxBytes=10240000,
-            backupCount=10
-        )
-        file_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-        ))
-        file_handler.setLevel(logging.INFO)
-        app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.INFO)
-        app.logger.info('DHIS2 Manager Web startup')
+    # Configuration du logging (actif en développement et production)
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    
+    # Handler pour fichier avec format enrichi
+    file_handler = RotatingFileHandler(
+        app.config.get('LOG_FILE', 'logs/app.log'),
+        maxBytes=app.config.get('LOG_MAX_BYTES', 10485760),
+        backupCount=app.config.get('LOG_BACKUP_COUNT', 10)
+    )
+    file_handler.setFormatter(logging.Formatter(
+        '[%(asctime)s] %(levelname)s %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    ))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('DHIS2 Manager Web startup')
     
     # Enregistrer les blueprints (routes)
-    from app.routes import main, configuration, generator, calculator, api
+    from app.routes import main, configuration, generator, calculator, api, admin
     app.register_blueprint(main.bp)
     app.register_blueprint(configuration.bp)
     app.register_blueprint(generator.bp)
     app.register_blueprint(calculator.bp)
     app.register_blueprint(api.bp)
+    app.register_blueprint(admin.bp)
     
     # Service de nettoyage des sessions au démarrage
     from app.services.session_manager import cleanup_old_sessions

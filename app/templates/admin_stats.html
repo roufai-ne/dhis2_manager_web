@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Statistiques - Admin{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-chart-bar text-red-600 mr-3"></i>
+                    Statistiques d'Utilisation
+                </h1>
+                <p class="text-gray-600">Analyse des activités système</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-home mr-2"></i>
+                    Accueil
+                </a>
+                <a href="{{ url_for('admin.logs') }}" class="btn btn-secondary">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    Logs
+                </a>
+                <a href="{{ url_for('admin.logout') }}" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Déconnexion
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="card bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm text-gray-600 font-medium mb-1">Total Logs</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ stats.total_logs }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-database text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm text-gray-600 font-medium mb-1">INFO</p>
+                    <p class="text-3xl font-bold text-green-600">{{ stats.by_level.INFO }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-info-circle text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm text-gray-600 font-medium mb-1">WARNING</p>
+                    <p class="text-3xl font-bold text-yellow-600">{{ stats.by_level.WARNING }}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm text-gray-600 font-medium mb-1">ERROR</p>
+                    <p class="text-3xl font-bold text-red-600">{{ stats.by_level.ERROR }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-times-circle text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="card">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-users text-blue-600 mr-2"></i>
+                Activité par Utilisateur
+            </h3>
+            <div class="space-y-3">
+                {% for user, count in stats.by_user.items() %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-user text-blue-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-900">{{ user or 'anonymous' }}</span>
+                    </div>
+                    <span class="text-2xl font-bold text-blue-600">{{ count }}</span>
+                </div>
+                {% endfor %}
+                
+                {% if not stats.by_user %}
+                <p class="text-gray-500 text-center py-8">Aucune activité utilisateur</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-plug text-green-600 mr-2"></i>
+                Connexions Récentes
+            </h3>
+            <div class="space-y-2">
+                {% for conn in stats.recent_connections %}
+                <div class="p-3 bg-green-50 border-l-4 border-green-600 rounded">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-medium text-gray-900">
+                            <i class="fas fa-user text-gray-400 mr-1"></i>
+                            {{ conn.user or 'anonymous' }}
+                        </span>
+                        <span class="text-xs text-gray-500 font-mono">{{ conn.timestamp }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600">{{ conn.message }}</p>
+                </div>
+                {% endfor %}
+                
+                {% if not stats.recent_connections %}
+                <p class="text-gray-500 text-center py-8">Aucune connexion récente</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Errors -->
+    <div class="card">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-exclamation-circle text-red-600 mr-2"></i>
+            Erreurs Récentes
+        </h3>
+        <div class="space-y-2">
+            {% for error in stats.recent_errors %}
+            <div class="p-4 bg-red-50 border-l-4 border-red-600 rounded">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-medium text-red-900">
+                        <i class="fas fa-user text-red-400 mr-1"></i>
+                        {{ error.user or 'anonymous' }}
+                        <span class="text-gray-400 mx-2">•</span>
+                        <i class="fas fa-network-wired text-red-400 mr-1"></i>
+                        {{ error.ip }}
+                    </span>
+                    <span class="text-xs text-red-600 font-mono">{{ error.timestamp }}</span>
+                </div>
+                <p class="text-sm text-gray-900 font-mono bg-white px-3 py-2 rounded">{{ error.message }}</p>
+            </div>
+            {% endfor %}
+            
+            {% if not stats.recent_errors %}
+            <div class="text-center py-12">
+                <i class="fas fa-check-circle text-green-500 text-5xl mb-3"></i>
+                <p class="text-gray-600 font-medium">Aucune erreur récente</p>
+                <p class="text-sm text-gray-500">Le système fonctionne correctement</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
