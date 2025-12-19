@@ -44,6 +44,9 @@ class AutoMappingConfig:
     # Colonnes standard Template DHIS2
     col_section_template: str = 'Section'
     col_data_element_template: str = 'Data Element'
+    col_org_unit_template: str = 'Organisation unit'
+    col_coc_template: str = 'Category option combo'
+    col_value_template: str = 'Value'
     
     # Colonnes standard TCD
     col_etablissement: str = 'NOM_ETAB'
@@ -271,6 +274,59 @@ class AutoProcessor:
         
         logger.info("AutoProcessor initialisé")
     
+    def detect_template_columns(self):
+        """
+        Détecte les noms réels des colonnes dans le template.
+        Met à jour la configuration avec les noms trouvés.
+        """
+        if self.df_template is None:
+            return
+
+        def find_col(possible_names, default_idx):
+            cols = self.df_template.columns
+            # 1. Exact match (case insensitive)
+            for name in possible_names:
+                for col in cols:
+                    if str(col).lower() == name.lower():
+                        return col
+            
+            # 2. Paremter match
+            for name in possible_names:
+                if name in cols:
+                    return name
+                    
+            # 3. Index fallback
+            if len(cols) > default_idx:
+                return cols[default_idx]
+            return None
+
+        # Section
+        self.config.col_section_template = find_col(
+            ['Section', 'Groupe', 'Catégorie', 'Category', 'section', 'group'], 0
+        )
+        
+        # Data Element
+        self.config.col_data_element_template = find_col(
+             ['Data Element', 'Data element', 'dataElementName', 'Element', 'Name'], 1
+        )
+        
+        # Org Unit
+        self.config.col_org_unit_template = find_col(
+            ['Organisation unit', 'Org unit', 'orgUnitName', 'Organisation', 'Establishment'], 2
+        )
+        
+        # Category Option Combo
+        self.config.col_coc_template = find_col(
+            ['Category option combo', 'Category option combo name', 'categoryOptionComboName', 'COC', 'Catégorie'], 3
+        )
+
+        # Value
+        self.config.col_value_template = find_col(
+            ['Value', 'value', 'Valeur', 'Nombre'], 4
+        )
+        
+        logger.info(f"Colonnes détectées: Section='{self.config.col_section_template}', DE='{self.config.col_data_element_template}', Org='{self.config.col_org_unit_template}'")
+
     def load_template(self, template_path: str, sheet_name: str = 'Données'):
         """
         Charge le template DHIS2.
@@ -286,6 +342,8 @@ class AutoProcessor:
             sheet_name=sheet_name, 
             header=int(self.config.template_header_row)
         )
+        
+        self.detect_template_columns()
         
         logger.info(f"Template chargé: {len(self.df_template)} lignes, {len(self.df_template.columns)} colonnes")
         logger.info(f"Colonnes: {self.df_template.columns.tolist()}")
@@ -321,7 +379,7 @@ class AutoProcessor:
         # Extraire les noms uniques du template
         noms_template = {
             str(n).strip(): n 
-            for n in self.df_template['orgUnitName'].unique()
+            for n in self.df_template[self.config.col_org_unit_template].unique()
             if pd.notna(n)
         }
         
@@ -357,17 +415,17 @@ class AutoProcessor:
         logger.info("Construction de l'index de recherche...")
         
         # Ajouter colonnes normalisées au template
-        self.df_template['_coc_norm'] = self.df_template['categoryOptionComboName'].apply(
+        self.df_template['_coc_norm'] = self.df_template[self.config.col_coc_template].apply(
             Normalizer.normaliser_coc
         )
-        self.df_template['_org_norm'] = self.df_template['orgUnitName'].apply(
+        self.df_template['_org_norm'] = self.df_template[self.config.col_org_unit_template].apply(
             lambda x: str(x).strip() if pd.notna(x) else None
         )
         
         # Construire la clé de recherche
         self.df_template['_cle'] = (
-            self.df_template['section'].fillna('').str.strip() + '|' +
-            self.df_template['dataElementName'].fillna('').str.strip() + '|' +
+            self.df_template[self.config.col_section_template].fillna('').str.strip() + '|' +
+            self.df_template[self.config.col_data_element_template].fillna('').str.strip() + '|' +
             self.df_template['_org_norm'].fillna('') + '|' +
             self.df_template['_coc_norm'].fillna('')
         )
@@ -628,27 +686,13 @@ class AutoProcessor:
         
         seen = set()
         
-        # Helper pour trouver une colonne
-        def find_col(possible_names, default_idx):
-            for name in possible_names:
-                if name in self.df_template.columns:
-                    return name
-            # Si pas de correspondance par nom, utiliser l'index si possible
-            if len(self.df_template.columns) > default_idx:
-                return self.df_template.columns[default_idx]
-            return None
-
-        # Identifier les colonnes Section et Data Element
-        col_section = find_col([self.config.col_section_template, 'Section', 'SECTION', 'Groupe', 'Group'], 0)
-        col_de = find_col([self.config.col_data_element_template, 'Data Element', 'DATA_ELEMENT', 'Element', 'Name'], 1)
-
-        if not col_section or not col_de:
+        if not self.config.col_section_template or not self.config.col_data_element_template:
              cols = self.df_template.columns.tolist()
              return {'error': f"Colonnes template introuvables. Colonnes dispos: {cols}"}
 
         for idx, row in self.df_template.iterrows():
-            section = str(row[col_section]).strip()
-            de_name = str(row[col_de]).strip()
+            section = str(row[self.config.col_section_template]).strip()
+            de_name = str(row[self.config.col_data_element_template]).strip()
             
             key = (section, de_name)
             if key not in seen and section and de_name:
