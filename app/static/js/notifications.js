@@ -5,6 +5,7 @@
 
 const NotificationManager = {
     container: null,
+    maxToasts: 5,
 
     init() {
         if (!this.container) {
@@ -18,6 +19,15 @@ const NotificationManager = {
 
     show(message, type = 'info', duration = 5000) {
         this.init();
+
+        // Limit number of toasts
+        while (this.container.children.length >= this.maxToasts) {
+            const oldToast = this.container.firstElementChild;
+            if (oldToast) {
+                // Force remove immediately without animation to make space
+                oldToast.remove();
+            }
+        }
 
         const notification = document.createElement('div');
         notification.className = 'notification-toast';
@@ -88,6 +98,7 @@ const NotificationManager = {
                     line-height: 1.5;
                     flex: 1;
                     margin: 0;
+                    word-break: break-word;
                 ">${message}</p>
                 <button onclick="this.closest('.notification-toast').dispatchEvent(new Event('close'))"
                         style="
@@ -130,15 +141,22 @@ const NotificationManager = {
 
         // Auto remove
         if (duration > 0) {
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 this.hide(notification);
             }, duration);
+            // Store timeout ID to clear it if manually closed (optional but good practice)
+            notification.dataset.timeoutId = timeoutId;
         }
 
         return notification;
     },
 
     hide(notification) {
+        // Clear timeout if exists customization
+        if (notification.dataset.timeoutId) {
+            clearTimeout(Number(notification.dataset.timeoutId));
+        }
+
         notification.style.transform = 'translateX(400px)';
         notification.style.opacity = '0';
         setTimeout(() => {
@@ -148,19 +166,19 @@ const NotificationManager = {
         }, 400);
     },
 
-    success(message, duration = 5000) {
+    success(message, duration = 4000) {
         return this.show(message, 'success', duration);
     },
 
-    error(message, duration = 7000) {
+    error(message, duration = 5000) {
         return this.show(message, 'error', duration);
     },
 
-    warning(message, duration = 6000) {
+    warning(message, duration = 5000) {
         return this.show(message, 'warning', duration);
     },
 
-    info(message, duration = 5000) {
+    info(message, duration = 3000) {
         return this.show(message, 'info', duration);
     }
 };

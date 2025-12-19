@@ -1067,6 +1067,61 @@ def extract_tcd_values():
         return jsonify({'error': str(e)}), 500
 
 
+@bp.route('/api/tcd/mapping-suggestions', methods=['POST'])
+def generate_mapping_suggestions():
+    """
+    Génère des suggestions de mapping data elements.
+    """
+    if 'excel_file' not in session or 'template_file' not in session:
+        return jsonify({'error': 'Fichiers manquants (TCD ou Template)'}), 400
+    
+    try:
+        data = request.get_json() or {}
+        sheet_name = data.get('sheet_name')
+        col_data_element = data.get('col_data_element')
+        
+        if not sheet_name or not col_data_element:
+            return jsonify({'error': 'Paramètres manquants'}), 400
+        
+        # Initialiser le processeur
+        metadata_manager = get_metadata_from_session()
+        processor = AutoProcessor(metadata_manager)
+        
+        # Charger les fichiers
+        # Note: AutoProcessor gère les chemins
+        session_tcd = session['excel_file']
+        session_template = session['template_file']
+        
+        # Manuellement configurer le processeur
+        processor.config.tcd_path = session_tcd
+        processor.config.template_path = session_template
+        
+        # Charger Template (nécessaire pour la liste des cibles)
+        processor.load_template(session_template)
+        
+        # Générer suggestions (lit le TCD directement via config.tcd_path)
+        result = processor.generate_mapping_suggestions(sheet_name, col_data_element)
+        
+        if 'error' in result:
+             return jsonify({'success': False, 'error': result['error']}), 400
+             
+        return jsonify({
+            'success': True,
+            'mapped_de': result['mapped_count'],
+            'total_de': result['total_tcd'],
+            'mapped_org': 0, # Placeholder
+            'total_org': 0,   # Placeholder
+            'suggestions': {
+                'data_elements': result['suggestions'],
+                'etablissements': {} 
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erreur suggestions mapping: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
 @bp.route('/api/auto/process', methods=['POST'])
 def process_auto():
     """
@@ -1123,6 +1178,12 @@ def process_auto():
         # Construire la configuration
         config = AutoMappingConfig()
         config.etablissements_patterns = config_data.get('etablissements_patterns', {})
+        
+        # Mapping optionnel des colonnes de catégories (défaut: Sexe/Age)
+        config.category_cols = config_data.get('category_cols', ['SEXE', 'GROUP_AGE'])
+        
+        # Mapping optionnel des valeurs (ex: 'Nationalite': {'NIGER': 'Nigerien'})
+        config.value_mappings = config_data.get('value_mappings', {})
         
         # Convertir data_elements_manuels (list → tuple)
         de_manuels_data = config_data.get('data_elements_manuels', {})

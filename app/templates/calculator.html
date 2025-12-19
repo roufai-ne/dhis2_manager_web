@@ -636,6 +636,23 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 </p>
             </div>
 
+            <!-- Colonnes Catégories -->
+            <div class="form-group mb-6">
+                <label class="form-label required">
+                    <i class="fas fa-tags mr-2"></i>Colonnes de Catégories (Option Combo)
+                </label>
+                <div id="auto-cat-cols-container" class="space-y-2 mb-2">
+                    <!-- Dynamically filled -->
+                </div>
+                <button type="button" class="btn btn-sm btn-outline text-blue-600 border-blue-600 hover:bg-blue-50"
+                    id="btn-add-cat-col">
+                    <i class="fas fa-plus mr-1"></i>Ajouter une colonne
+                </button>
+                <p class="text-sm text-gray-600 mt-2">
+                    Sélectionnez les colonnes constituant la combinaison de catégorie (ex: Sexe, Age).
+                </p>
+            </div>
+
             <!-- Période -->
             <div class="form-group mb-6">
                 <label for="auto-period" class="form-label required">
@@ -3168,6 +3185,16 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         document.getElementById('auto-sheet-info').textContent =
             `${sheet.rows} lignes détectées`;
 
+        // Helper to create options
+        const createOptions = (selectedVal = '') => {
+            let opts = '<option value="">-- Sélectionner --</option>';
+            sheet.columns.forEach(col => {
+                const selected = col === selectedVal ? 'selected' : '';
+                opts += `<option value="${col}" ${selected}>${col}</option>`;
+            });
+            return opts;
+        };
+
         // Remplir select colonnes data element
         const colSelect = document.getElementById('auto-col-de');
         colSelect.innerHTML = '<option value="">-- Sélectionnez la colonne --</option>';
@@ -3192,8 +3219,48 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             colCodeSelect.appendChild(option);
         });
 
+        // --- GESTION DES COLONNES DE CATEGORIES ---
+        const catContainer = document.getElementById('auto-cat-cols-container');
+        catContainer.innerHTML = ''; // Start fresh
+
+        // Fonction pour ajouter une colonne
+        window.addAutoCategoryColumn = function (selectedValue = '') {
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 items-center';
+            div.innerHTML = `
+                <select class="form-input auto-cat-col-select flex-1">
+                    ${createOptions(selectedValue)}
+                </select>
+                <button type="button" class="btn btn-sm btn-ghost text-red-500 hover:bg-red-50" onclick="this.parentElement.remove()">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            catContainer.appendChild(div);
+        };
+
+        // Essayer de détecter Sexe et Age automatiquement
+        let autoAdded = false;
+        sheet.columns.forEach(col => {
+            const lower = col.toLowerCase();
+            if (lower.includes('sex') || lower.includes('genre') || lower.includes('age') || lower.includes('tranche')) {
+                window.addAutoCategoryColumn(col);
+                autoAdded = true;
+            }
+        });
+
+        // Si rien détecté, ajouter 2 vides par défaut (cas standard Age+Sexe)
+        if (!autoAdded) {
+            window.addAutoCategoryColumn();
+            window.addAutoCategoryColumn();
+        }
+
         // Cacher l'étape 4 en attendant la sélection de la colonne
         document.getElementById('auto-step4').classList.add('hidden');
+    });
+
+    // Add button listener
+    document.getElementById('btn-add-cat-col')?.addEventListener('click', () => {
+        if (window.addAutoCategoryColumn) window.addAutoCategoryColumn();
     });
 
     // Changement de colonne data element
@@ -3231,7 +3298,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 document.getElementById('auto-step4').classList.remove('hidden');
 
                 // Initialiser les mappings maintenant que nous avons toutes les données
-                setTimeout(() => {
+                setTimeout(async () => {
                     // Effacer les conteneurs
                     document.getElementById('auto-org-mappings').innerHTML = '';
                     document.getElementById('auto-de-mappings').innerHTML = '';
@@ -3241,7 +3308,48 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
 
                     // Ajouter un mapping vide pour les autres
                     addAutoOrgMapping();
-                    addAutoDEMapping();
+
+                    // --- CHARGER SUGGESTIONS INTELLIGENTES ---
+                    let suggestions = {};
+                    try {
+                        LoadingOverlay.show('Recherche de correspondances intelligentes...');
+                        const sugResp = await fetch('/calculator/api/tcd/mapping-suggestions', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                sheet_name: sheetName,
+                                col_data_element: colName
+                            })
+                        });
+                        const sugData = await sugResp.json();
+                        if (sugData.success && sugData.suggestions && sugData.suggestions.data_elements) {
+                            suggestions = sugData.suggestions.data_elements;
+
+                            // Afficher un petit toast récapitulatif
+                            const count = Object.keys(suggestions).length;
+                            if (count > 0) {
+                                NotificationManager.success(`${count} suggestions trouvées automatiquement`);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Erreur suggestions:", e);
+                    } finally {
+                        LoadingOverlay.hide();
+                    }
+
+                    // Remplir les Data Elements avec suggestions
+                    // On itère sur toutes les valeurs uniques trouvées
+                    autoTCDValeursDE.forEach(val => {
+                        if (suggestions[val]) {
+                            // Si suggestion trouvée, on pré-remplit
+                            const s = suggestions[val];
+                            addAutoDEMapping(val, s.suggested_section, s.suggested_name);
+                        } else {
+                            // Sinon vide
+                            addAutoDEMapping(val);
+                        }
+                    });
+
                 }, 100);
             } else {
                 NotificationManager.error('Erreur extraction valeurs: ' + data.error);
@@ -3385,6 +3493,17 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             return;
         }
 
+        // Récupérer les colonnes de catégories
+        const category_cols = [];
+        document.querySelectorAll('.auto-cat-col-select').forEach(sel => {
+            if (sel.value) category_cols.push(sel.value);
+        });
+
+        if (category_cols.length === 0) {
+            NotificationManager.error('Veuillez sélectionner au moins une colonne de catégorie (ex: Sexe)');
+            return;
+        }
+
         // Récupérer les mappings
         const etablissements_patterns = {};
         document.querySelectorAll('#auto-org-mappings > div').forEach(div => {
@@ -3425,9 +3544,11 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                     tcd_sheet: sheetName,
                     col_data_element: colDE,
                     period: period,
+                    period: period,
                     config: {
                         etablissements_patterns: etablissements_patterns,
-                        data_elements_manuels: data_elements_manuels
+                        data_elements_manuels: data_elements_manuels,
+                        category_cols: category_cols
                     }
                 })
             });
@@ -3514,9 +3635,28 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
                 const list = document.getElementById('auto-not-found-list');
                 list.innerHTML = '';
                 stats.combinaisons_non_trouvees.forEach(item => {
-                    const p = document.createElement('p');
-                    p.textContent = `${item.cle} (valeur: ${item.valeur})`;
-                    list.appendChild(p);
+                    const div = document.createElement('div');
+                    div.className = 'bg-red-50 p-2 rounded border border-red-100 mb-2 text-xs';
+
+                    if (item.details) {
+                        div.innerHTML = `
+                            <div class="font-bold text-red-800 mb-1">
+                                <i class="fas fa-times-circle mr-1"></i>
+                                Combinaison Introuvable (Valeur: ${item.valeur})
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                                <div><span class="font-semibold">Organisation:</span> ${item.details.organisation}</div>
+                                <div><span class="font-semibold">Data Element:</span> ${item.details.data_element}</div>
+                                <div class="col-span-2 text-red-700 font-bold border-t border-red-200 mt-1 pt-1">
+                                    <span class="font-semibold">Problème Catégorie:</span> "${item.details.coc_norm}" n'existe pas pour cet élément.
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Fallback pour compatibilité
+                        div.textContent = `${item.cle} (valeur: ${item.valeur})`;
+                    }
+                    list.appendChild(div);
                 });
             }
         }

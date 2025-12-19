@@ -12,6 +12,8 @@ Architecture:
 import pandas as pd
 import re
 import logging
+import difflib
+import unicodedata
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -39,11 +41,30 @@ class AutoMappingConfig:
     template_header_row: int = 5  # Header template DHIS2 à la ligne 5 (index 5)
     tcd_header_row: int = 0       # Header TCD à la ligne 0 (index 0 = première ligne)
     
+    # Colonnes standard Template DHIS2
+    col_section_template: str = 'Section'
+    col_data_element_template: str = 'Data Element'
+    
     # Colonnes standard TCD
     col_etablissement: str = 'NOM_ETAB'
     col_code_etablissement: str = 'CODE_ETAB'
-    col_age: str = 'GROUP_AGE'
-    col_sexe: str = 'SEXE'
+    
+    # Generic Category Configuration
+    # Defaults to ['SEXE', 'GROUP_AGE'] for backward compatibility
+    category_cols: List[str] = field(default_factory=lambda: ['SEXE', 'GROUP_AGE'])
+    
+    # Value Mappings: {column_name: {old_value: new_value}}
+    # Example: {'Nationalite': {'NIGER': 'Nigerien', 'MALI': 'Malien'}}
+    value_mappings: Dict[str, Dict[str, str]] = field(default_factory=dict)
+
+    # Legacy attributes for backward compatibility
+    @property
+    def col_age(self):
+        return self.category_cols[1] if len(self.category_cols) > 1 else 'GROUP_AGE'
+        
+    @property
+    def col_sexe(self):
+        return self.category_cols[0] if len(self.category_cols) > 0 else 'SEXE'
 
 
 @dataclass
@@ -118,28 +139,53 @@ class Normalizer:
         return s
     
     @staticmethod
+    def normalize_value(val: Any, column_name: str = None, mappings: Dict[str, Dict[str, str]] = None) -> Optional[str]:
+        """
+        Generic normalizer for any value.
+        Applies specific rules based on value content (e.g. Age) or mappings.
+        """
+        if pd.isna(val):
+            return None
+            
+        s = str(val).strip()
+        
+        # 1. Apply Mappings if available
+        if mappings and column_name and column_name in mappings:
+            if s in mappings[column_name]:
+                return mappings[column_name][s]
+        
+        # 2. Heuristic for Age Ranges
+        # If it matches age patterns, use age normalizer
+        if 'ANS' in s.upper() or Normalizer.PATTERN_AGE_RANGE.search(s) or '+' in s or re.match(r'^-\s*\d+', s):
+             # Only apply if it doesn't look like a standard string
+             age_norm = Normalizer.normaliser_tranche_age(s)
+             if age_norm: return age_norm
+
+        # 3. Default: Upper case strip
+        return s.strip() #.upper() # Keep case sensitivity? DHIS2 usually sensitive, but let's stick to simple strip.
+
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        """
+        Normalise le texte pour la comparaison (majuscules, sans accents, sans caractères spéciaux).
+        """
+        if not isinstance(text, str):
+            text = str(text)
+            
+        # Supprimer les accents
+        text = unicodedata.normalize('NFD', text).encode('ascii', 'ignore').decode("utf-8")
+        
+        # Majuscules et nettoyage
+        text = re.sub(r'[^A-Z0-9]', '', text.upper())
+        
+        return text
+
+    @staticmethod
     def normaliser_coc(coc: Any) -> Optional[str]:
         """
-        Normalise un CategoryOptionCombo.
-        
-        Formats d'entrée possibles:
-        - 'F | [20 - 22[' → 'F|20-22'
-        - 'M | [22- 24[\t' → 'M|22-24'
-        - '- 18 ans | F' → 'F|-18'
-        - '40 ans +\t | M' → 'M|40+'
-        
-        Algorithme:
-        1. Supprimer tabs et normaliser espaces
-        2. Détecter le format (SEXE | AGE ou AGE | SEXE)
-        3. Extraire sexe et âge
-        4. Normaliser l'âge
-        5. Retourner 'SEXE|AGE_NORMALISE'
-        
-        Args:
-            coc: CategoryOptionCombo à normaliser
-            
-        Returns:
-            COC normalisé 'SEXE|AGE' ou None
+        Generic COC Normalization.
+        Splits by '|', normalizes each part, sorts them alphabetically, and joins back.
+        Matches 'Age|Sex' to 'Sex|Age' regardless of order.
         """
         if pd.isna(coc):
             return None
@@ -147,21 +193,27 @@ class Normalizer:
         s = str(coc).strip().replace('\t', ' ')
         s = re.sub(r'\s+', ' ', s)
         
-        # Format 1: "X | [NN - NN["
-        match1 = Normalizer.PATTERN_COC_FORMAT1.match(s)
-        if match1:
-            sexe = match1.group(1)
-            age = Normalizer.normaliser_tranche_age(match1.group(2))
-            return f"{sexe}|{age}" if age else None
+        # Split by pipe
+        parts = [p.strip() for p in s.split('|')]
         
-        # Format 2: "- 18 ans | X" ou "40 ans + | X"
-        match2 = Normalizer.PATTERN_COC_FORMAT2.match(s)
-        if match2:
-            age = Normalizer.normaliser_tranche_age(match2.group(1))
-            sexe = match2.group(2)
-            return f"{sexe}|{age}" if age else None
+        # Normalize each part individually
+        norm_parts = []
+        for p in parts:
+            # Try age normalization first
+            age_norm = Normalizer.normaliser_tranche_age(p)
+            if age_norm and age_norm != p:
+                norm_parts.append(age_norm)
+            else:
+                 # Just strip and uppercase for standard comparison?
+                 # Actually, template values should be kept as is but trimmed, 
+                 # or normalized same as TCD.
+                 # Let's use simple strip.
+                norm_parts.append(p.strip())
         
-        return s
+        # Sort to ensure order independence
+        norm_parts.sort()
+        
+        return '|'.join(norm_parts)
     
     @staticmethod
     def normaliser_string(s: Any) -> Optional[str]:
@@ -370,46 +422,40 @@ class AutoProcessor:
         
         # CRITIQUE: Propager les valeurs des cellules fusionnées (fill-down)
         df = df.copy()
+        # Propager les valeurs des cellules fusionnées (ffill)
+        df = df.copy()
         df[self.config.col_etablissement] = df[self.config.col_etablissement].ffill()
-        df[self.config.col_age] = df[self.config.col_age].ffill()
-        df[self.config.col_sexe] = df[self.config.col_sexe].ffill()
+        
+        for col in self.config.category_cols:
+            if col in df.columns:
+                df[col] = df[col].ffill()
         
         logger.info("Cellules fusionnées propagées (ffill)")
         
-        # Dernière colonne = valeurs
         col_valeur = df.columns[-1]
         logger.info(f"Colonne valeurs: '{col_valeur}'")
         
-        # Initialiser la liste des dataValues
         data_values = []
         
-        # Traiter chaque ligne
         for idx, row in df.iterrows():
             self.stats.lignes_traitees += 1
             
             etab = str(row[self.config.col_etablissement]).strip()
-            age = row[self.config.col_age]
-            sexe = row[self.config.col_sexe]
             data_elem = str(row[col_data_element]).strip()
             valeur = row[col_valeur]
             
-            # Ignorer les lignes sans valeur
             if pd.isna(valeur) or valeur == 0 or valeur == '':
                 continue
             
-            # Mapper l'établissement
             etab_template = self.mapping_etablissements.get(etab)
             if etab_template is None:
-                # Comptabiliser l'erreur
                 if etab not in self.stats.etablissements_non_mappes:
                     self.stats.etablissements_non_mappes[etab] = 0
                 self.stats.etablissements_non_mappes[etab] += int(float(valeur))
                 continue
             
-            # Mapper le data element
             mapping = self.config.data_elements_manuels.get(data_elem)
             if mapping is None:
-                # Comptabiliser l'erreur
                 if data_elem not in self.stats.data_elements_non_mappes:
                     self.stats.data_elements_non_mappes[data_elem] = 0
                 self.stats.data_elements_non_mappes[data_elem] += int(float(valeur))
@@ -417,47 +463,68 @@ class AutoProcessor:
             
             section, de_template = mapping
             
-            # Construire le COC normalisé
-            sexe_norm = str(sexe).strip().upper()
-            age_norm = Normalizer.normaliser_tranche_age(age)
+            # --- GENERIC COC CONSTRUCTION ---
+            normalized_parts = []
+            valid_row = True
             
-            if not age_norm:
-                logger.warning(f"Âge non normalisable: '{age}'")
-                continue
+            for col in self.config.category_cols:
+                raw_val = row.get(col)
+                norm_val = Normalizer.normalize_value(
+                    raw_val, 
+                    col, 
+                    self.config.value_mappings
+                )
+                
+                if norm_val is None:
+                    # Special case: If value is missing and we expect it, it might be an aggregate row or error
+                    # But if we rely on ffill, it should be there.
+                    # Exception: Some columns might be optional? No, usually all required for a COC.
+                    valid_row = False
+                    break
+                
+                normalized_parts.append(norm_val)
+                
+            if not valid_row:
+                 continue
+
+            # Sort parts to match Normalizer.normaliser_coc logic
+            normalized_parts.sort()
+            coc_norm = '|'.join(normalized_parts)
             
-            coc_norm = f"{sexe_norm}|{age_norm}"
+            # --------------------------------
             
-            # Construire la clé et rechercher
             cle = f"{section}|{de_template}|{etab_template}|{coc_norm}"
             
             if cle in self.index_recherche:
                 idx_template = self.index_recherche[cle]
                 
-                # Récupérer les UIDs depuis le template
                 org_unit_uid = self.df_template.at[idx_template, 'orgUnit']
                 data_element_uid = self.df_template.at[idx_template, 'dataElement']
                 coc_uid = self.df_template.at[idx_template, 'categoryOptionCombo']
                 
-                # Créer le dataValue
                 data_value = {
                     'dataElement': data_element_uid,
                     'period': period,
                     'orgUnit': org_unit_uid,
                     'categoryOptionCombo': coc_uid,
                     'value': str(int(float(valeur))),
-                    'attributeOptionCombo': 'HllvX50cXC0'  # Default COC
+                    'attributeOptionCombo': 'HllvX50cXC0'
                 }
                 
                 data_values.append(data_value)
                 self.stats.valeurs_inserees += 1
                 
-                # Log tous les 100 valeurs
                 if self.stats.valeurs_inserees % 100 == 0:
                     logger.info(f"Valeurs insérées: {self.stats.valeurs_inserees}")
             else:
-                # Combinaison non trouvée
                 self.stats.combinaisons_non_trouvees.append({
                     'cle': cle,
+                    'details': {
+                        'section': section,
+                        'data_element': de_template,
+                        'organisation': etab_template,
+                        'coc_norm': coc_norm
+                    },
                     'valeur': int(float(valeur)),
                     'etablissement': etab,
                     'data_element': data_elem,
@@ -535,3 +602,106 @@ class AutoProcessor:
                 'success': False,
                 'error': str(e)
             }
+
+    def generate_mapping_suggestions(self, sheet_name: str, col_de: str) -> Dict[str, Any]:
+        """
+        Génère des suggestions de mapping entre les valeurs du TCD et le Template.
+        Utilise la distance de Levenshtein sur les textes normalisés.
+        """
+        if self.df_template is None:
+            return {'error': 'Template non chargé'}
+
+        # 1. Extraire les valeurs uniques du TCD
+        if not self.config.tcd_path:
+             return {'error': 'Chemin TCD non configuré'}
+             
+        try:
+            df = pd.read_excel(self.config.tcd_path, sheet_name=sheet_name, header=int(self.config.tcd_header_row))
+            tcd_values = [str(v).strip() for v in df[col_de].dropna().unique() if str(v).strip()]
+        except Exception as e:
+            return {'error': f"Erreur lecture TCD: {str(e)}"}
+
+        # 2. Préparer les cibles (Template)
+        # On veut une liste de (Section, DE Name)
+        targets = []
+        target_map = {} # (section, de_name) -> original_row
+        
+        seen = set()
+        
+        # Helper pour trouver une colonne
+        def find_col(possible_names, default_idx):
+            for name in possible_names:
+                if name in self.df_template.columns:
+                    return name
+            # Si pas de correspondance par nom, utiliser l'index si possible
+            if len(self.df_template.columns) > default_idx:
+                return self.df_template.columns[default_idx]
+            return None
+
+        # Identifier les colonnes Section et Data Element
+        col_section = find_col([self.config.col_section_template, 'Section', 'SECTION', 'Groupe', 'Group'], 0)
+        col_de = find_col([self.config.col_data_element_template, 'Data Element', 'DATA_ELEMENT', 'Element', 'Name'], 1)
+
+        if not col_section or not col_de:
+             cols = self.df_template.columns.tolist()
+             return {'error': f"Colonnes template introuvables. Colonnes dispos: {cols}"}
+
+        for idx, row in self.df_template.iterrows():
+            section = str(row[col_section]).strip()
+            de_name = str(row[col_de]).strip()
+            
+            key = (section, de_name)
+            if key not in seen and section and de_name:
+                seen.add(key)
+                # Normaliser pour la recherche
+                norm_name = Normalizer.normalize_text(de_name)
+                # On ajoute aussi le nom brut pour l'affichage
+                targets.append({
+                    'section': section,
+                    'name': de_name,
+                    'norm': norm_name
+                })
+
+        # 3. Fuzzy Matching
+        suggestions = {}
+        
+        for val in tcd_values:
+            val_norm = Normalizer.normalize_text(val)
+            if not val_norm:
+                continue
+                
+            best_match = None
+            best_score = 0
+            
+            # Seuil de confiance
+            HIGH_CONFIDENCE = 0.85
+            MEDIUM_CONFIDENCE = 0.65
+            
+            for target in targets:
+                # Score 1: Ratio sur texte normalisé
+                score = difflib.SequenceMatcher(None, val_norm, target['norm']).ratio()
+                
+                # Bonus: Inclusion (ex: "TOTAL GARCONS" contient "GARCONS")
+                if val_norm in target['norm'] or target['norm'] in val_norm:
+                    if len(val_norm) > 3 and len(target['norm']) > 3: # Éviter les faux positifs courts
+                        score = max(score, 0.7) # Boost
+                
+                if score > best_score:
+                    best_score = score
+                    best_match = target
+            
+            if best_match and best_score >= MEDIUM_CONFIDENCE:
+                confidence_level = 'high' if best_score >= HIGH_CONFIDENCE else 'medium'
+                suggestions[val] = {
+                    'suggested_section': best_match['section'],
+                    'suggested_name': best_match['name'],
+                    'confidence': confidence_level,
+                    'score': round(best_score, 2)
+                }
+        
+        return {
+            'success': True,
+            'total_tcd': len(tcd_values),
+            'mapped_count': len(suggestions),
+            'suggestions': suggestions
+        }
