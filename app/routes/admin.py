@@ -57,27 +57,72 @@ def logout():
 @bp.route('/logs')
 @admin_required
 def logs():
-    """Page d'affichage des logs d'activité"""
+    """Page d'affichage des logs d'activité avec pagination et filtres"""
     log_file = current_app.config.get('LOG_FILE', 'logs/app.log')
     
-    # Lire les logs
+    # Params
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    filter_level = request.args.get('level', '').upper()
+    filter_user = request.args.get('user', '').lower()
+    filter_search = request.args.get('search', '').lower()
+    
     logs_data = []
+    total_logs = 0
+    total_pages = 0
+    
     try:
         if os.path.exists(log_file):
             with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
                 lines = f.readlines()
-                # Prendre les 500 dernières lignes et filtrer pour ne garder QUE les logs d'activité
-                for line in lines[-500:]:
+                
+                # 1. Parse & Filter
+                all_logs = []
+                for line in lines:
                     line = line.strip()
-                    # Ne garder que les lignes avec le format [user:xxx] [ip:xxx]
-                    if line and '[user:' in line and '[ip:' in line:
-                        logs_data.append(parse_log_line(line))
-            # Inverser pour avoir les plus récents en premier
-            logs_data.reverse()
+                    if not line or '[user:' not in line or '[ip:' not in line:
+                        continue
+                        
+                    # Parse d'abord pour filtrer sur les champs structurés
+                    parsed = parse_log_line(line)
+                    
+                    # Filtres
+                    if filter_level and parsed['level'] != filter_level:
+                        continue
+                    if filter_user and filter_user not in parsed['user'].lower():
+                        continue
+                    if filter_search and filter_search not in parsed['message'].lower():
+                        continue
+                        
+                    all_logs.append(parsed)
+                
+                # 2. Sort (Newest first)
+                all_logs.reverse()
+                
+                # 3. Pagination
+                total_logs = len(all_logs)
+                total_pages = (total_logs + per_page - 1) // per_page
+                
+                start = (page - 1) * per_page
+                end = start + per_page
+                logs_data = all_logs[start:end]
+                    
     except Exception as e:
         current_app.logger.error(f"Erreur lecture logs: {str(e)}")
     
-    return render_template('admin_logs.html', logs=logs_data)
+    return render_template(
+        'admin_logs.html', 
+        logs=logs_data,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+        total_logs=total_logs,
+        current_filters={
+            'level': filter_level,
+            'user': filter_user,
+            'search': filter_search
+        }
+    )
 
 
 @bp.route('/api/logs/clear', methods=['POST'])
@@ -213,7 +258,7 @@ def stats():
                 lines = f.readlines()
                 stats_data['total_logs'] = len(lines)
                 
-                for line in lines[-1000:]:  # Analyser les 1000 dernières lignes
+                for line in lines[-10000:]:  # Analyser les 10000 dernières lignes
                     line = line.strip()
                     if not line or line.startswith('*') or line.startswith('WARNING:'):
                         continue
@@ -236,6 +281,13 @@ def stats():
                     # Collecter connexions récentes
                     if 'Connexion DHIS2' in log_entry.get('message', '') and len(stats_data['recent_connections']) < 10:
                         stats_data['recent_connections'].append(log_entry)
+                        
+        # Calculer le max pour les barres de progression
+        if stats_data['by_user']:
+            stats_data['max_user_activity'] = max(stats_data['by_user'].values())
+        else:
+            stats_data['max_user_activity'] = 0
+            
     except Exception as e:
         current_app.logger.error(f"Erreur calcul stats: {str(e)}")
     

@@ -82,26 +82,26 @@
         </div>
     </div>
 
-    <!-- Users Activity -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="card">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">
+        <div class="card h-full">
+            <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
                 <i class="fas fa-users text-blue-600 mr-2"></i>
                 Activité par Utilisateur
             </h3>
-            <div class="space-y-3">
+            <div class="space-y-4">
                 {% for user, count in stats.by_user.items() %}
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-user text-blue-600"></i>
-                        </div>
-                        <span class="font-medium text-gray-900">{{ user or 'anonymous' }}</span>
+                {% set percent = (count / stats.max_user_activity * 100) if stats.max_user_activity > 0 else 0 %}
+                <div class="relative">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-medium text-gray-700">{{ user or 'anonymous' }}</span>
+                        <span class="text-sm font-bold text-blue-600">{{ count }}</span>
                     </div>
-                    <span class="text-2xl font-bold text-blue-600">{{ count }}</span>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ percent }}%"></div>
+                    </div>
                 </div>
                 {% endfor %}
-                
+
                 {% if not stats.by_user %}
                 <p class="text-gray-500 text-center py-8">Aucune activité utilisateur</p>
                 {% endif %}
@@ -126,7 +126,7 @@
                     <p class="text-sm text-gray-600">{{ conn.message }}</p>
                 </div>
                 {% endfor %}
-                
+
                 {% if not stats.recent_connections %}
                 <p class="text-gray-500 text-center py-8">Aucune connexion récente</p>
                 {% endif %}
@@ -156,7 +156,7 @@
                 <p class="text-sm text-gray-900 font-mono bg-white px-3 py-2 rounded">{{ error.message }}</p>
             </div>
             {% endfor %}
-            
+
             {% if not stats.recent_errors %}
             <div class="text-center py-12">
                 <i class="fas fa-check-circle text-green-500 text-5xl mb-3"></i>
