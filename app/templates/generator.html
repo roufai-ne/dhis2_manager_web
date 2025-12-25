@@ -258,10 +258,19 @@
                 <label class="form-label text-sm">
                     Période <span class="text-red-500">*</span>
                 </label>
-                <input type="text" id="period-input" placeholder="Ex: 2024" class="form-input font-mono">
+                <div class="relative">
+                    <select id="period-input"
+                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3 px-4 bg-white disabled:bg-gray-100 disabled:text-gray-500 transition-colors font-medium border"
+                        disabled>
+                        <option value="">-- Sélectionnez d'abord un dataset --</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <i class="fas fa-chevron-down text-xs mr-2"></i>
+                    </div>
+                </div>
                 <p id="period-hint" class="text-xs text-gray-500 mt-2 flex items-center">
                     <i class="fas fa-lightbulb text-yellow-500 mr-1"></i>
-                    <span>Sélectionnez un dataset pour voir les formats</span>
+                    <span>La liste dépend du type de période du dataset</span>
                 </p>
             </div>
         </div>
@@ -345,7 +354,7 @@
 
         document.getElementById('btn-generate').addEventListener('click', generateTemplate);
         document.getElementById('btn-generate-csv-names').addEventListener('click', generateCsvNames);
-        document.getElementById('period-input').addEventListener('input', validateForm);
+        document.getElementById('period-input').addEventListener('change', validateForm);
     });
 
     function loadFilters() {
@@ -374,6 +383,28 @@
             .catch(e => console.error('Erreur niveaux:', e));
     }
 
+    function filterIdsByScope(instance, ids) {
+        const selectedNodes = instance.get_selected(true);
+        if (selectedNodes.length === 0) return ids;
+
+        const allowedIds = new Set();
+        selectedNodes.forEach(node => {
+            allowedIds.add(node.id);
+            if (node.children_d) {
+                node.children_d.forEach(childId => allowedIds.add(childId));
+            }
+        });
+
+        const originalCount = ids.length;
+        const filtered = ids.filter(id => allowedIds.has(id));
+
+        if (filtered.length < originalCount) {
+            NotificationManager.info(`Filtre appliqué à la sélection existante (${filtered.length}/${originalCount})`);
+        }
+
+        return filtered;
+    }
+
     function selectByGroup() {
         const groupId = document.getElementById('org-group-select').value;
         if (!groupId) return;
@@ -383,9 +414,10 @@
             .then(r => r.json())
             .then(data => {
                 const instance = $('#org-tree').jstree(true);
-                instance.check_node(data.ids);
-                revealSelected(data.ids);
-                NotificationManager.success(`${data.ids.length} unités sélectionnées`);
+                const idsToSelect = filterIdsByScope(instance, data.ids);
+                instance.check_node(idsToSelect);
+                revealSelected(idsToSelect);
+                NotificationManager.success(`${idsToSelect.length} unités sélectionnées`);
             })
             .catch(e => NotificationManager.error('Erreur de sélection'))
             .finally(() => LoadingOverlay.hide());
@@ -400,9 +432,10 @@
             .then(r => r.json())
             .then(data => {
                 const instance = $('#org-tree').jstree(true);
-                instance.check_node(data.ids);
-                revealSelected(data.ids);
-                NotificationManager.success(`${data.ids.length} unités sélectionnées`);
+                const idsToSelect = filterIdsByScope(instance, data.ids);
+                instance.check_node(idsToSelect);
+                revealSelected(idsToSelect);
+                NotificationManager.success(`${idsToSelect.length} unités sélectionnées`);
             })
             .catch(e => NotificationManager.error('Erreur de sélection'))
             .finally(() => LoadingOverlay.hide());
@@ -455,7 +488,31 @@
                         }
                     },
                     'checkbox': { 'keep_selected_style': false, 'three_state': false },
-                    'plugins': ['checkbox', 'search', 'types']
+                    'plugins': ['checkbox', 'search', 'types', 'contextmenu'],
+                    'contextmenu': {
+                        'items': function (node) {
+                            return {
+                                'select_children': {
+                                    'label': 'Sélectionner les enfants',
+                                    'action': function (data) {
+                                        var inst = $.jstree.reference(data.reference);
+                                        var obj = inst.get_node(data.reference);
+                                        inst.check_node(obj);
+                                        inst.check_node(obj.children_d);
+                                    }
+                                },
+                                'deselect_children': {
+                                    'label': 'Désélectionner les enfants',
+                                    'action': function (data) {
+                                        var inst = $.jstree.reference(data.reference);
+                                        var obj = inst.get_node(data.reference);
+                                        inst.uncheck_node(obj);
+                                        inst.uncheck_node(obj.children_d);
+                                    }
+                                }
+                            };
+                        }
+                    }
                 }).on('changed.jstree', function (e, data) {
                     selectedOrgUnits = data.selected;
                     document.getElementById('selected-count').textContent = selectedOrgUnits.length;
@@ -469,7 +526,11 @@
         document.querySelectorAll('.dataset-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
 
-        selectedDataset = { id: card.dataset.id, periodType: card.dataset.periodType };
+        selectedDataset = {
+            id: card.dataset.id,
+            periodType: card.dataset.periodType,
+            name: card.dataset.name // Captured for filename
+        };
         document.getElementById('period-type-display').value = selectedDataset.periodType;
 
         fetch(`/generator/api/dataset/${selectedDataset.id}/info`)
@@ -486,16 +547,123 @@
         fetch(`/generator/api/period-examples/${selectedDataset.periodType}`)
             .then(r => r.json())
             .then(data => {
-                document.getElementById('period-hint').innerHTML = `<i class="fas fa-lightbulb text-yellow-500 mr-1"></i> Exemples valides: <span class="font-mono font-bold text-gray-700">${data.examples.join(', ')}</span>`;
+                // Keep the hint for reference but rely on dropdown
+                // document.getElementById('period-hint').innerHTML = ...
             });
 
+        updatePeriodOptions(selectedDataset.periodType);
         validateForm();
+    }
+
+    function updatePeriodOptions(periodType) {
+        const select = document.getElementById('period-input');
+        select.innerHTML = '<option value="">-- Sélectionner une période --</option>';
+        select.disabled = false;
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); // 0-11
+
+        let options = [];
+
+        if (periodType === 'Monthly') {
+            // Last 18 months + Next 6 months
+            for (let i = -18; i <= 6; i++) {
+                const d = new Date(currentYear, currentMonth + i, 1);
+                const year = d.getFullYear();
+                const month = d.getMonth() + 1;
+                const monthStr = month < 10 ? '0' + month : month;
+                const label = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                // Capitalize first letter
+                const formattedLabel = label.charAt(0).toUpperCase() + label.slice(1);
+                options.push({ value: `${year}${monthStr}`, label: formattedLabel, sort: d.getTime() });
+            }
+        }
+        else if (periodType === 'Quarterly') {
+            // Last 3 years + Next 1 year
+            for (let y = currentYear - 3; y <= currentYear + 1; y++) {
+                for (let q = 1; q <= 4; q++) {
+                    options.push({ value: `${y}Q${q}`, label: `${y} - Trimestre ${q}`, sort: parseInt(`${y}${q}`) });
+                }
+            }
+        }
+        else if (periodType === 'SixMonthly') {
+            // Last 5 years + Next 1 year
+            for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+                // S1: Jan-Jun
+                options.push({ value: `${y}S1`, label: `${y} - Semestre 1 (Jan-Juin)`, sort: parseInt(`${y}1`) });
+                // S2: Jul-Dec
+                options.push({ value: `${y}S2`, label: `${y} - Semestre 2 (Juil-Déc)`, sort: parseInt(`${y}2`) });
+            }
+        }
+        else if (periodType === 'Yearly' || periodType === 'FinancialYear') {
+            // Last 10 years + Next 2 years
+            for (let y = currentYear - 10; y <= currentYear + 2; y++) {
+                options.push({ value: `${y}`, label: `${y}`, sort: y });
+            }
+        }
+        else {
+            // Fallback for others (Weekly, etc - just give recent years as base or generic)
+            select.innerHTML = '<option value="">Type de période non géré automatiquement</option>';
+            // Ideally revert to text input here, but for now just show years
+            for (let y = currentYear - 5; y <= currentYear + 2; y++) {
+                options.push({ value: `${y}`, label: `${y}`, sort: y });
+            }
+        }
+
+        // Sort descending (newest first)
+        options.sort((a, b) => b.sort - a.sort);
+
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            select.appendChild(option);
+        });
     }
 
     function validateForm() {
         const isValid = selectedDataset && selectedOrgUnits.length > 0 && document.getElementById('period-input').value.trim();
         document.getElementById('btn-generate').disabled = !isValid;
         document.getElementById('btn-generate-csv-names').disabled = !isValid;
+    }
+
+    function formatDatasetName(text) {
+        if (!text) return 'Dataset';
+        // Remove common generic words but keep the rest readable
+        let clean = text.replace(/Données|Data|Formulaire|Rapport|Mensuel|Trimestriel|Annuel/gi, '');
+        clean = clean.replace(/[^a-zA-Z0-9 ]/g, '');
+        clean = clean.trim();
+        // Replace spaces with underscores, limit length but don't acronymize
+        return clean.replace(/\s+/g, '_').substring(0, 40);
+    }
+
+    function formatOUName(text) {
+        if (!text) return 'OrgUnit';
+        // Remove administrative prefixes to keep it clean but readable
+        let clean = text.replace(/District Sanitaire de|District Sanitaire|Centre de Santé de Référence|Centre de Santé|Region de|Hôpital|Général/gi, '');
+        clean = clean.replace(/[^a-zA-Z0-9 ]/g, '');
+        clean = clean.trim();
+        // Keep full name, just sanitized
+        return clean.replace(/\s+/g, '_');
+    }
+
+    function getParentOUName() {
+        const instance = $('#org-tree').jstree(true);
+        // Priority 1: Highlighted Node
+        const selectedNodes = instance.get_selected(true);
+        if (selectedNodes.length > 0) {
+            return selectedNodes[0].text;
+        }
+
+        // Priority 2: If only one checkbox checked, use that
+        const checked = instance.get_checked(true);
+        if (checked.length === 1) {
+            return checked[0].text;
+        }
+
+        // Priority 3: Common Parent? (Too complex for now)
+        return "Multi";
     }
 
     function generateTemplate() {
@@ -525,7 +693,12 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `Template_${period}.xlsx`;
+
+                // Construct Filename
+                const ouPart = formatOUName(getParentOUName());
+                const dsPart = formatDatasetName(selectedDataset.name); // Using stored name
+                a.download = `${ouPart}_${dsPart}_${period}.xlsx`;
+
                 a.click();
                 URL.revokeObjectURL(url);
                 NotificationManager.success('Template généré avec succès !');
@@ -594,8 +767,9 @@
             .then(r => r.json())
             .then(data => {
                 const instance = $('#org-tree').jstree(true);
-                instance.uncheck_node(data.ids);
-                NotificationManager.success(`${data.ids.length} unités désélectionnées`);
+                const idsToDeselect = filterIdsByScope(instance, data.ids);
+                instance.uncheck_node(idsToDeselect);
+                NotificationManager.success(`${idsToDeselect.length} unités désélectionnées`);
             })
             .catch(e => NotificationManager.error('Erreur de désélection'))
             .finally(() => LoadingOverlay.hide());
@@ -610,8 +784,9 @@
             .then(r => r.json())
             .then(data => {
                 const instance = $('#org-tree').jstree(true);
-                instance.uncheck_node(data.ids);
-                NotificationManager.success(`${data.ids.length} unités désélectionnées`);
+                const idsToDeselect = filterIdsByScope(instance, data.ids);
+                instance.uncheck_node(idsToDeselect);
+                NotificationManager.success(`${idsToDeselect.length} unités désélectionnées`);
             })
             .catch(e => NotificationManager.error('Erreur de désélection'))
             .finally(() => LoadingOverlay.hide());

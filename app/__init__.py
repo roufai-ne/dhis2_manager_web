@@ -56,6 +56,24 @@ def create_app(config_name='default'):
     app.logger.setLevel(logging.INFO)
     app.logger.info('DHIS2 Manager Web startup')
     
+    # Desactiver le cache en mode DEBUG
+    if app.config['DEBUG']:
+        @app.after_request
+        def add_header(response):
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, public, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response
+
+    # Injecter la version pour le cache busting
+    @app.context_processor
+    def inject_version():
+        import time
+        # En dev: timestamp actuel (cache buster aggressif)
+        # En prod: version fixe ou timestamp de démarrage
+        version = int(time.time()) if app.config['DEBUG'] else '5.1'
+        return dict(version=version)
+
     # Enregistrer les blueprints (routes)
     from app.routes import main, configuration, generator, calculator, api, admin
     app.register_blueprint(main.bp)
