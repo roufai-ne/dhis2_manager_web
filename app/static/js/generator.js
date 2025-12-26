@@ -24,6 +24,17 @@ document.addEventListener('DOMContentLoaded', function () {
         card.addEventListener('click', function () { selectDataset(this); });
     });
 
+    // Tree Search with Debounce
+    let searchTimeout = null;
+    document.getElementById('org-search').addEventListener('input', function (e) {
+        const term = e.target.value;
+        if (searchTimeout) clearTimeout(searchTimeout);
+
+        searchTimeout = setTimeout(function () {
+            $('#org-tree').jstree(true).search(term);
+        }, 250);
+    });
+
     // Tree Controls
     document.getElementById('btn-select-all').addEventListener('click', () => $('#org-tree').jstree('check_all'));
     document.getElementById('btn-deselect-all').addEventListener('click', () => $('#org-tree').jstree('uncheck_all'));
@@ -164,6 +175,10 @@ function loadOrgTree() {
                         'name': 'default',
                         'responsive': true
                     }
+                },
+                'search': {
+                    'show_only_matches': true,
+                    'show_only_matches_children': true
                 },
                 'checkbox': { 'keep_selected_style': false, 'three_state': false },
                 'plugins': ['checkbox', 'search', 'types', 'contextmenu'],
