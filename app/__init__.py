@@ -75,13 +75,14 @@ def create_app(config_name='default'):
         return dict(version=version)
 
     # Enregistrer les blueprints (routes)
-    from app.routes import main, configuration, generator, calculator, api, admin
+    from app.routes import main, configuration, generator, calculator, api, admin, imputation
     app.register_blueprint(main.bp)
     app.register_blueprint(configuration.bp)
     app.register_blueprint(generator.bp)
     app.register_blueprint(calculator.bp)
     app.register_blueprint(api.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(imputation.imputation_bp)
     
     # Service de nettoyage des sessions au démarrage
     from app.services.session_manager import cleanup_old_sessions

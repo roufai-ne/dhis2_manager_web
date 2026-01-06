@@ -18,7 +18,7 @@
         <p class="mb-6 text-blue-100">
             Suivez ces étapes simples pour transformer vos données Excel en payload DHIS2
         </p>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
                 <div class="text-3xl font-bold mb-2">1</div>
                 <h4 class="font-semibold mb-1">Configuration</h4>
@@ -36,6 +36,11 @@
             </div>
             <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
                 <div class="text-3xl font-bold mb-2">4</div>
+                <h4 class="font-semibold mb-1">Imputation</h4>
+                <p class="text-sm text-blue-100">Complétez les valeurs manquantes</p>
+            </div>
+            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+                <div class="text-3xl font-bold mb-2">5</div>
                 <h4 class="font-semibold mb-1">Calcul</h4>
                 <p class="text-sm text-blue-100">Générez le JSON DHIS2</p>
             </div>
@@ -151,7 +156,69 @@
                 </div>
             </div>
             
-            <!-- FAQ 5 -->
+            <!-- FAQ 6 - Imputation -->
+            <div class="faq-item">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <span class="font-semibold text-gray-800">Comment fonctionne le module d'imputation automatique ?</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </button>
+                <div class="faq-answer hidden p-6 bg-gray-50 text-gray-700">
+                    <p class="mb-3">Le module d'imputation permet de compléter automatiquement les valeurs manquantes dans vos données :</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <strong class="text-orange-600">Étape 1 : Analyse</strong>
+                            <p class="text-sm mt-1">Le système détecte les colonnes avec valeurs manquantes et analyse leur type (numérique, catégoriel, date)</p>
+                        </div>
+                        <div>
+                            <strong class="text-orange-600">Étape 2 : Corrélation</strong>
+                            <p class="text-sm mt-1">Calcul des corrélations entre colonnes pour identifier les prédicteurs potentiels</p>
+                        </div>
+                        <div>
+                            <strong class="text-orange-600">Étape 3 : Configuration</strong>
+                            <p class="text-sm mt-1">Choix de la méthode d'imputation par colonne : médiane, mode, régression linéaire, K-NN</p>
+                        </div>
+                        <div>
+                            <strong class="text-orange-600">Étape 4 : Exécution</strong>
+                            <p class="text-sm mt-1">Application des méthodes et génération d'un rapport de qualité</p>
+                        </div>
+                    </div>
+                    
+                    <p class="mt-3 p-3 bg-orange-50 border-l-4 border-orange-500 text-sm">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        <strong>Conseil :</strong> La régression linéaire et K-NN sont recommandés pour les données fortement corrélées.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- FAQ 7 -->
+            <div class="faq-item">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <span class="font-semibold text-gray-800">Comment utiliser le mode Tableau Croisé ?</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </button>
+                <div class="faq-answer hidden p-6 bg-gray-50 text-gray-700">
+                    <p class="mb-3">Le mode Tableau Croisé permet de traiter des fichiers Excel avec une structure en colonnes :</p>
+                    
+                    <ol class="list-decimal ml-6 space-y-2">
+                        <li>Uploadez votre fichier Excel avec structure pivotée</li>
+                        <li>Sélectionnez le mode <strong>"Tableau Croisé"</strong></li>
+                        <li>Choisissez le Data Element DHIS2 à associer aux valeurs</li>
+                        <li>Le système résout automatiquement les organisations par code ou nom</li>
+                    </ol>
+                    
+                    <p class="mt-3 text-sm">
+                        <strong>Structure attendue :</strong> La première colonne contient les codes/noms d'organisation, les autres colonnes contiennent les valeurs.
+                    </p>
+                    
+                    <p class="mt-3 p-3 bg-purple-50 border-l-4 border-purple-500 text-sm">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Idéal pour traiter rapidement des exports Excel avec organisations en lignes et périodes/indicateurs en colonnes.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- FAQ 8 -->
             <div class="faq-item">
                 <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
                     <span class="font-semibold text-gray-800">Combien de temps les données restent-elles en session ?</span>
@@ -173,7 +240,7 @@
                 </div>
             </div>
             
-            <!-- FAQ 6 -->
+            <!-- FAQ 9 -->
             <div class="faq-item">
                 <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 transition-colors">
                     <span class="font-semibold text-gray-800">Comment importer le JSON généré dans DHIS2 ?</span>
@@ -229,6 +296,14 @@
                 <li class="flex items-start">
                     <i class="fas fa-chevron-right text-green-600 mr-2 mt-1"></i>
                     <span>Utilisez le preview JSON pour vérifier le contenu</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-chevron-right text-green-600 mr-2 mt-1"></i>
+                    <span>Utilisez l'imputation pour compléter les données incomplètes</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-chevron-right text-green-600 mr-2 mt-1"></i>
+                    <span>Vérifiez le rapport de qualité après imputation</span>
                 </li>
             </ul>
         </div>

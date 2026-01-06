@@ -21,10 +21,10 @@
                 <i class="fas fa-code-branch text-3xl text-blue-500 mr-4"></i>
                 <div>
                     <h3 class="text-lg font-bold text-gray-800">Version</h3>
-                    <p class="text-2xl font-bold text-blue-600">5.1</p>
+                    <p class="text-2xl font-bold text-blue-600">5.2</p>
                 </div>
             </div>
-            <p class="text-sm text-gray-600">Web Edition</p>
+            <p class="text-sm text-gray-600">Web Edition - Janvier 2026</p>
         </div>
 
         <!-- Développeur -->
@@ -45,10 +45,10 @@
                 <i class="fas fa-layer-group text-3xl text-purple-500 mr-4"></i>
                 <div>
                     <h3 class="text-lg font-bold text-gray-800">Stack</h3>
-                    <p class="text-sm text-gray-700">Flask • Python • Tailwind</p>
+                    <p class="text-sm text-gray-700">Flask • Python • Pandas • Tailwind</p>
                 </div>
             </div>
-            <p class="text-sm text-gray-600">Architecture moderne</p>
+            <p class="text-sm text-gray-600">Architecture moderne & IA</p>
         </div>
     </div>
 
@@ -75,20 +75,24 @@
             <i class="fas fa-list-check mr-2"></i>Fonctionnalités Principales
         </h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Module Configuration -->
             <div class="border-l-4 border-blue-500 pl-4">
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">
                     <i class="fas fa-cog text-blue-500 mr-2"></i>Configuration
                 </h3>
-                <ul class="space-y-2 text-gray-700">
+                <ul class="space-y-2 text-gray-700 text-sm">
                     <li class="flex items-start">
                         <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                        <span>Connexion API directe</span>
+                        <span>Connexion API DHIS2</span>
                     </li>
                     <li class="flex items-start">
                         <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                        <span>Synchronisation des métadonnées</span>
+                        <span>Sync métadonnées</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Gestion de session</span>
                     </li>
                 </ul>
             </div>
@@ -98,14 +102,18 @@
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">
                     <i class="fas fa-file-excel text-green-500 mr-2"></i>Générateur
                 </h3>
-                <ul class="space-y-2 text-gray-700">
+                <ul class="space-y-2 text-gray-700 text-sm">
                     <li class="flex items-start">
                         <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                        <span>Templates Excel standardisés</span>
+                        <span>Templates Excel</span>
                     </li>
                     <li class="flex items-start">
                         <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                        <span>Filtrage par Groupe et Niveau</span>
+                        <span>Sélection hiérarchique</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Tous types de période</span>
                     </li>
                 </ul>
             </div>
@@ -115,14 +123,164 @@
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">
                     <i class="fas fa-calculator text-purple-500 mr-2"></i>Calculateur
                 </h3>
-                <ul class="space-y-2 text-gray-700">
+                <ul class="space-y-2 text-gray-700 text-sm">
                     <li class="flex items-start">
                         <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                        <span>Validation des données</span>
+                        <span>Multi-onglets Excel</span>
                     </li>
                     <li class="flex items-start">
                         <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                        <span>Génération de payload JSON</span>
+                        <span>Mode Tableau Croisé</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Payload JSON DHIS2</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Module Imputation -->
+            <div class="border-l-4 border-orange-500 pl-4">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">
+                    <i class="fas fa-magic text-orange-500 mr-2"></i>Imputation
+                </h3>
+                <ul class="space-y-2 text-gray-700 text-sm">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Détection valeurs manquantes</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Analyse de corrélation</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Imputation intelligente</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nouveautés Version 5.2 -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-8 mb-8 border border-blue-200">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-sparkles mr-2 text-blue-600"></i>Nouveautés Version 5.2
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Imputation Automatique -->
+            <div class="bg-white rounded-lg p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-orange-600 mb-4">
+                    <i class="fas fa-magic mr-2"></i>Module d'Imputation
+                </h3>
+                <ul class="space-y-2 text-gray-700 text-sm">
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-orange-500 mr-2 mt-1"></i>
+                        <span>Analyse automatique des types de colonnes (numériques, catégorielles, dates)</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-orange-500 mr-2 mt-1"></i>
+                        <span>Calcul de corrélations pour imputation prédictive</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-orange-500 mr-2 mt-1"></i>
+                        <span>Multiple méthodes : médiane, mode, régression linéaire, K-NN</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-orange-500 mr-2 mt-1"></i>
+                        <span>Configuration par colonne avec suggestions IA</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-orange-500 mr-2 mt-1"></i>
+                        <span>Rapport de qualité détaillé avec scores</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Calculateur Avancé -->
+            <div class="bg-white rounded-lg p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-purple-600 mb-4">
+                    <i class="fas fa-table mr-2"></i>Calculateur Avancé
+                </h3>
+                <ul class="space-y-2 text-gray-700 text-sm">
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-purple-500 mr-2 mt-1"></i>
+                        <span>Support multi-onglets Excel avec sélection dynamique</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-purple-500 mr-2 mt-1"></i>
+                        <span>Mode Tableau Croisé pour données pivotées</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-purple-500 mr-2 mt-1"></i>
+                        <span>Résolution automatique des organisations par code/nom</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-purple-500 mr-2 mt-1"></i>
+                        <span>Validation avancée avec rapports d'erreurs détaillés</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-purple-500 mr-2 mt-1"></i>
+                        <span>Optimisations performances pour gros fichiers (PyArrow)</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Interface & UX -->
+            <div class="bg-white rounded-lg p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-green-600 mb-4">
+                    <i class="fas fa-paint-brush mr-2"></i>Interface Améliorée
+                </h3>
+                <ul class="space-y-2 text-gray-700 text-sm">
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-green-500 mr-2 mt-1"></i>
+                        <span>Design moderne avec Tailwind CSS</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-green-500 mr-2 mt-1"></i>
+                        <span>Notifications toast animées avec gestion de pile</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-green-500 mr-2 mt-1"></i>
+                        <span>Overlay de chargement avec états visuels</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-green-500 mr-2 mt-1"></i>
+                        <span>Tableaux interactifs (Tabulator) avec pagination</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-green-500 mr-2 mt-1"></i>
+                        <span>Interface responsive adaptative mobile/desktop</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Admin & Logs -->
+            <div class="bg-white rounded-lg p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-red-600 mb-4">
+                    <i class="fas fa-shield-alt mr-2"></i>Administration
+                </h3>
+                <ul class="space-y-2 text-gray-700 text-sm">
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-red-500 mr-2 mt-1"></i>
+                        <span>Système de logs d'activité détaillés</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-red-500 mr-2 mt-1"></i>
+                        <span>Dashboard statistiques d'utilisation</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-red-500 mr-2 mt-1"></i>
+                        <span>Filtrage et recherche dans les logs</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-red-500 mr-2 mt-1"></i>
+                        <span>Protection par authentification admin</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-chevron-right text-red-500 mr-2 mt-1"></i>
+                        <span>Nettoyage automatique des sessions anciennes</span>
                     </li>
                 </ul>
             </div>

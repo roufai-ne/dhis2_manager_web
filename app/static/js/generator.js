@@ -186,21 +186,51 @@ function loadOrgTree() {
                     'items': function (node) {
                         return {
                             'select_children': {
-                                'label': 'Sélectionner les enfants',
+                                'label': 'Sélectionner les enfants directs',
                                 'action': function (data) {
                                     var inst = $.jstree.reference(data.reference);
                                     var obj = inst.get_node(data.reference);
-                                    inst.check_node(obj);
-                                    inst.check_node(obj.children_d);
+                                    // Sélectionner seulement les enfants directs, pas le parent ni les sous-enfants
+                                    if (obj.children && obj.children.length > 0) {
+                                        obj.children.forEach(function(childId) {
+                                            inst.check_node(childId);
+                                        });
+                                    }
                                 }
                             },
                             'deselect_children': {
-                                'label': 'Désélectionner les enfants',
+                                'label': 'Désélectionner les enfants directs',
                                 'action': function (data) {
                                     var inst = $.jstree.reference(data.reference);
                                     var obj = inst.get_node(data.reference);
-                                    inst.uncheck_node(obj);
-                                    inst.uncheck_node(obj.children_d);
+                                    // Désélectionner seulement les enfants directs
+                                    if (obj.children && obj.children.length > 0) {
+                                        obj.children.forEach(function(childId) {
+                                            inst.uncheck_node(childId);
+                                        });
+                                    }
+                                }
+                            },
+                            'select_all_descendants': {
+                                'label': 'Sélectionner tous les descendants',
+                                'action': function (data) {
+                                    var inst = $.jstree.reference(data.reference);
+                                    var obj = inst.get_node(data.reference);
+                                    // Sélectionner récursivement (comportement ancien)
+                                    if (obj.children_d && obj.children_d.length > 0) {
+                                        inst.check_node(obj.children_d);
+                                    }
+                                }
+                            },
+                            'deselect_all_descendants': {
+                                'label': 'Désélectionner tous les descendants',
+                                'action': function (data) {
+                                    var inst = $.jstree.reference(data.reference);
+                                    var obj = inst.get_node(data.reference);
+                                    // Désélectionner récursivement
+                                    if (obj.children_d && obj.children_d.length > 0) {
+                                        inst.uncheck_node(obj.children_d);
+                                    }
                                 }
                             }
                         };

@@ -1,0 +1,920 @@
+{% extends "layout.html" %}
+
+{% block title %}Imputation Automatique - DHIS2 Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" />
+<link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
+<style>
+    .imputation-dropzone {
+        border: 3px dashed var(--gray-300);
+        border-radius: var(--radius-xl);
+        background: white;
+        padding: var(--spacing-2xl);
+        transition: all 0.3s ease;
+        min-height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .imputation-dropzone:hover {
+        border-color: var(--primary-600);
+        background: var(--primary-50);
+    }
+
+    .imputation-dropzone.dragover {
+        border-color: var(--primary-600);
+        background: var(--primary-100);
+    }
+
+    .step-badge {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.25rem;
+        border: 3px solid;
+    }
+
+    .step-badge.inactive {
+        background: var(--gray-200);
+        border-color: var(--gray-300);
+        color: var(--gray-500);
+    }
+
+    .step-badge.active {
+        background: var(--primary-600);
+        border-color: var(--primary-700);
+        color: white;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .step-badge.completed {
+        background: var(--success-600);
+        border-color: var(--success-700);
+        color: white;
+    }
+
+    .stat-card {
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .imputed-cell {
+        background-color: #fef3c7 !important;
+        font-weight: 600;
+    }
+
+    .imputed-cell::after {
+        content: ' ✨';
+        font-size: 0.8em;
+    }
+
+    .quality-bar {
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+        background: var(--gray-200);
+    }
+
+    .quality-fill {
+        height: 100%;
+        transition: width 0.5s ease;
+    }
+
+    .method-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .preview-table {
+        max-height: 500px;
+        overflow: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-6 py-8 fade-in" x-data="imputationApp()">
+    
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-extrabold text-gray-900 mb-3 flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-magic text-white text-xl"></i>
+                    </div>
+                    Imputation Automatique
+                </h1>
+                <p class="text-lg text-gray-600">
+                    Complétez automatiquement les valeurs manquantes avec des méthodes statistiques avancées
+                </p>
+            </div>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                <i class="fas fa-home mr-2"></i>
+                Accueil
+            </a>
+        </div>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="card mb-8">
+        <div class="grid grid-cols-4 gap-4">
+            <!-- Step 1 -->
+            <div class="flex flex-col items-center text-center">
+                <div class="step-badge mb-3" :class="currentStep >= 1 ? 'active' : 'inactive'">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <div class="font-semibold text-sm" :class="currentStep >= 1 ? 'text-orange-600' : 'text-gray-500'">
+                    Étape 1
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Import fichier</div>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="flex flex-col items-center text-center">
+                <div class="step-badge mb-3" :class="currentStep >= 2 ? (currentStep === 2 ? 'active' : 'completed') : 'inactive'">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="font-semibold text-sm" :class="currentStep >= 2 ? 'text-orange-600' : 'text-gray-500'">
+                    Étape 2
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Analyse</div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="flex flex-col items-center text-center">
+                <div class="step-badge mb-3" :class="currentStep >= 3 ? (currentStep === 3 ? 'active' : 'completed') : 'inactive'">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="font-semibold text-sm" :class="currentStep >= 3 ? 'text-orange-600' : 'text-gray-500'">
+                    Étape 3
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Configuration</div>
+            </div>
+            
+            <!-- Step 4 -->
+            <div class="flex flex-col items-center text-center">
+                <div class="step-badge mb-3" :class="currentStep >= 4 ? 'active' : 'inactive'">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="font-semibold text-sm" :class="currentStep >= 4 ? 'text-orange-600' : 'text-gray-500'">
+                    Étape 4
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Résultats</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 1: Upload -->
+    <div x-show="currentStep === 1" class="card">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+            <i class="fas fa-upload text-orange-600 mr-3"></i>
+            Étape 1: Importez votre fichier
+        </h2>
+
+        <div class="imputation-dropzone"
+             @dragover.prevent="isDragging = true"
+             @dragleave.prevent="isDragging = false"
+             @drop.prevent="handleFileDrop"
+             @click="$refs.fileInput.click()"
+             :class="{'dragover': isDragging}">
+            <div class="text-center">
+                <i class="fas fa-cloud-upload-alt text-7xl text-orange-500 mb-6 block"></i>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">Glissez-déposez votre fichier ici</h3>
+                <p class="text-gray-600 mb-6">ou cliquez pour sélectionner un fichier</p>
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <span class="badge badge-success">
+                        <i class="fas fa-file-excel mr-1"></i>XLSX
+                    </span>
+                    <span class="badge badge-success">
+                        <i class="fas fa-file-excel mr-1"></i>XLS
+                    </span>
+                    <span class="badge badge-info">
+                        <i class="fas fa-file-csv mr-1"></i>CSV
+                    </span>
+                </div>
+                <p class="text-sm text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Taille maximale: 50 MB
+                </p>
+            </div>
+            <input type="file" x-ref="fileInput" @change="handleFileSelect" accept=".xlsx,.xls,.csv" class="hidden">
+        </div>
+
+        <div x-show="uploadProgress > 0 && uploadProgress < 100" class="mt-6">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>Upload en cours...
+                </span>
+                <span class="text-sm font-bold text-orange-600" x-text="`${uploadProgress}%`"></span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill bg-orange-600" :style="`width: ${uploadProgress}%`"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Analysis -->
+    <div x-show="currentStep === 2" class="space-y-6">
+        <!-- Summary Stats -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
+                Étape 2: Analyse des données
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-blue-100 mb-1">Total Lignes</p>
+                            <p class="text-4xl font-bold text-white" x-text="analysis.total_rows || 0"></p>
+                        </div>
+                        <i class="fas fa-database text-white text-3xl opacity-20"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card bg-gradient-to-br from-green-500 to-green-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-green-100 mb-1">Colonnes</p>
+                            <p class="text-4xl font-bold text-white" x-text="analysis.total_columns || 0"></p>
+                        </div>
+                        <i class="fas fa-columns text-white text-3xl opacity-20"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card bg-gradient-to-br from-red-500 to-red-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-red-100 mb-1">Valeurs Manquantes</p>
+                            <p class="text-4xl font-bold text-white" x-text="analysis.total_missing || 0"></p>
+                            <p class="text-xs text-red-100 mt-1" x-text="`${(analysis.missing_percentage || 0).toFixed(2)}%`"></p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle text-white text-3xl opacity-20"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card bg-gradient-to-br from-orange-500 to-orange-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-orange-100 mb-1">Score Qualité</p>
+                            <p class="text-4xl font-bold text-white" x-text="`${(analysis.global_quality_score || 0).toFixed(1)}%`"></p>
+                        </div>
+                        <i class="fas fa-star text-white text-3xl opacity-20"></i>
+                    </div>
+                </div>
+            </div>
+
+            <button @click="loadDetailedAnalysis" class="btn btn-primary">
+                <i class="fas fa-microscope mr-2"></i>
+                Afficher l'analyse détaillée par colonne
+            </button>
+        </div>
+
+        <!-- Detailed Analysis Table -->
+        <div x-show="columnsAnalysis.length > 0" class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Analyse détaillée des colonnes</h3>
+                <span class="badge badge-primary" x-text="`${columnsAnalysis.length} colonnes`"></span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Colonne</th>
+                            <th>Type</th>
+                            <th>Valeurs Manquantes</th>
+                            <th>Aberrants</th>
+                            <th>Score Qualité</th>
+                            <th>Recommandations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="col in columnsAnalysis" :key="col.name">
+                            <tr>
+                                <td class="font-medium" x-text="col.name"></td>
+                                <td>
+                                    <span class="badge badge-info" x-text="col.type"></span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="font-medium" x-text="col.missing_count"></span>
+                                        <span class="text-sm text-gray-500" x-text="`(${col.missing_percent}%)`"></span>
+                                    </div>
+                                    <div class="quality-bar mt-1">
+                                        <div class="quality-fill bg-red-500" :style="`width: ${col.missing_percent}%`"></div>
+                                    </div>
+                                </td>
+                                <td x-text="col.outliers_count"></td>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <div class="quality-bar flex-1">
+                                            <div class="quality-fill" 
+                                                 :class="getQualityColorClass(col.quality_score)"
+                                                 :style="`width: ${col.quality_score}%`"></div>
+                                        </div>
+                                        <span class="text-sm font-medium" x-text="`${col.quality_score}%`"></span>
+                                    </div>
+                                </td>
+                                <td class="text-sm text-gray-600">
+                                    <template x-if="col.recommendations && col.recommendations.length > 0">
+                                        <span x-text="col.recommendations[0]"></span>
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex justify-between">
+            <button @click="currentStep = 1" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour
+            </button>
+            <button @click="goToConfiguration" class="btn btn-primary">
+                Continuer vers la configuration
+                <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 3: Configuration -->
+    <div x-show="currentStep === 3" class="space-y-6">
+        <div class="card">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-cogs text-white"></i>
+                </div>
+                Étape 3: Configuration de l'imputation
+            </h2>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">
+                            Sélectionnez les colonnes à imputer et choisissez la méthode pour chaque colonne. 
+                            Les recommandations sont générées automatiquement mais vous pouvez les personnaliser.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mb-6">
+                <button @click="loadRecommendations" class="btn btn-primary" :disabled="isLoadingRecommendations">
+                    <i class="fas fa-magic mr-2"></i>
+                    <span x-text="isLoadingRecommendations ? 'Calcul en cours...' : 'Générer les recommandations automatiques'"></span>
+                </button>
+                <button @click="selectAllColumns" class="btn btn-secondary" x-show="Object.keys(recommendations).length > 0">
+                    <i class="fas fa-check-double mr-2"></i>
+                    Sélectionner tout
+                </button>
+                <button @click="deselectAllColumns" class="btn btn-secondary" x-show="Object.keys(recommendations).length > 0">
+                    <i class="fas fa-times mr-2"></i>
+                    Désélectionner tout
+                </button>
+            </div>
+        </div>
+
+        <!-- Colonnes configurables -->
+        <div x-show="Object.keys(recommendations).length > 0" class="space-y-4">
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">
+                        Configuration des colonnes
+                    </h3>
+                    <span class="badge badge-primary" x-text="`${selectedColumns.length} / ${Object.keys(recommendations).length} sélectionnées`"></span>
+                </div>
+
+                <div class="space-y-4">
+                    <template x-for="(config, colName) in recommendations" :key="colName">
+                        <div class="border rounded-lg p-4 transition" 
+                             :class="selectedColumns.includes(colName) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white'">
+                            
+                            <!-- En-tête avec checkbox -->
+                            <div class="flex items-start gap-4 mb-4">
+                                <div class="flex items-center h-8">
+                                    <input type="checkbox" 
+                                           :id="`col-${colName}`"
+                                           :checked="selectedColumns.includes(colName)"
+                                           @change="toggleColumn(colName)"
+                                           class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                </div>
+                                <label :for="`col-${colName}`" class="flex-1 cursor-pointer">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-lg text-gray-900" x-text="colName"></h4>
+                                        </div>
+                                        <span class="method-badge"
+                                              :class="config.missing_percent > 40 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>
+                                            <span x-text="`${config.missing_count} manquants (${config.missing_percent.toFixed(1)}%)`"></span>
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Configuration détaillée (visible si sélectionné) -->
+                            <div x-show="selectedColumns.includes(colName)" class="ml-9 space-y-4 border-t pt-4">
+                                
+                                <!-- Sélection de la méthode -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-magic text-purple-600 mr-2"></i>
+                                        Méthode d'imputation
+                                    </label>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <template x-for="method in availableMethods" :key="method.value">
+                                            <button @click="setColumnMethod(colName, method.value)"
+                                                    :title="method.desc"
+                                                    class="px-3 py-2 text-sm rounded-lg border transition relative group"
+                                                    :class="userConfig[colName]?.method === method.value || (!userConfig[colName] && config.method === method.value) ? 
+                                                           'bg-indigo-600 text-white border-indigo-600' : 
+                                                           'bg-white text-gray-700 border-gray-300 hover:border-indigo-500'">
+                                                <i :class="method.icon + ' mr-1'"></i>
+                                                <span x-text="method.label"></span>
+                                                <!-- Tooltip -->
+                                                <span class="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10"
+                                                      x-text="method.desc"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1" x-show="config.method">
+                                        Recommandé: <span class="font-medium" x-text="config.method"></span>
+                                    </p>
+                                </div>
+
+                                <!-- Options pour méthodes par groupe -->
+                                <div x-show="(userConfig[colName]?.method || config.method).includes('group')">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-sitemap text-blue-600 mr-2"></i>
+                                        Colonnes de regroupement
+                                    </label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="col in config.grouping_columns || []" :key="col">
+                                            <span class="badge badge-info" x-text="col"></span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Options pour KNN -->
+                                <div x-show="(userConfig[colName]?.method || config.method) === 'knn'">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-users text-green-600 mr-2"></i>
+                                        Nombre de voisins (K)
+                                    </label>
+                                    <input type="number" 
+                                           :value="userConfig[colName]?.k_neighbors || 5"
+                                           @input="setColumnKNN(colName, $event.target.value)"
+                                           min="1" max="20"
+                                           class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                                    <span class="text-sm text-gray-500 ml-2">voisins</span>
+                                </div>
+
+                                <!-- Prédicteurs -->
+                                <div x-show="config.predictors && config.predictors.length > 0">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-chart-line text-indigo-600 mr-2"></i>
+                                        Variables prédictives (corrélation)
+                                    </label>
+                                    <div class="space-y-2">
+                                        <template x-for="pred in config.predictors" :key="pred.column">
+                                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                                <span class="text-sm text-gray-700" x-text="pred.column"></span>
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-indigo-600 h-2 rounded-full" 
+                                                             :style="`width: ${pred.correlation_score * 100}%`"></div>
+                                                    </div>
+                                                    <span class="text-sm font-medium text-indigo-600" 
+                                                          x-text="`${(pred.correlation_score * 100).toFixed(0)}%`"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between">
+            <button @click="currentStep = 2" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour
+            </button>
+            <button @click="executeImputation" class="btn btn-success" :disabled="isProcessing || selectedColumns.length === 0">
+                <i class="fas fa-play mr-2"></i>
+                <span x-text="isProcessing ? 'Traitement en cours...' : `Exécuter l'imputation (${selectedColumns.length} colonnes)`"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 4: Results -->
+    <div x-show="currentStep === 4" class="space-y-6">
+        <!-- Success Message -->
+        <div class="card">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Imputation terminée avec succès!</h2>
+                    <p class="text-gray-600">
+                        <span class="font-bold text-green-600" x-text="report.total_corrections || 0"></span> 
+                        valeurs ont été imputées
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-green-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-green-700">
+                            Les valeurs imputées sont mises en surbrillance dans l'aperçu ci-dessous. 
+                            Vous pouvez télécharger le fichier complet avec toutes les corrections.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary by Column -->
+            <div class="mb-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Résumé par colonne</h3>
+                <div class="space-y-3">
+                    <template x-for="(info, colName) in report.corrections_by_column" :key="colName">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex-1">
+                                <div class="font-bold text-gray-900" x-text="colName"></div>
+                                <div class="text-sm text-gray-600 mt-1">
+                                    <span class="badge badge-sm badge-primary" x-text="info.method"></span>
+                                    <span class="ml-2">
+                                        <i class="fas fa-arrow-right text-gray-400 mx-2"></i>
+                                        <span class="text-red-600" x-text="`${info.missing_before} manquants`"></span>
+                                        <i class="fas fa-arrow-right text-gray-400 mx-2"></i>
+                                        <span class="text-green-600" x-text="`${info.missing_after} restants`"></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-green-600" x-text="info.corrections_count"></div>
+                                <div class="text-xs text-gray-500">corrections</div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Preview with Highlighted Imputed Values -->
+            <div x-show="imputedPreview && imputedPreview.length > 0">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-eye text-purple-600"></i>
+                    Aperçu des données imputées
+                    <span class="badge badge-warning">Les valeurs imputées sont en surbrillance ✨</span>
+                </h3>
+                <div class="preview-table border border-gray-200 rounded-lg overflow-hidden">
+                    <div id="imputedDataTable"></div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 mt-8">
+                <a :href="`/imputation/download/${fileId}`" class="btn btn-success">
+                    <i class="fas fa-download mr-2"></i>
+                    Télécharger le fichier complet
+                </a>
+                <button @click="showComparison" class="btn btn-primary" x-show="false">
+                    <i class="fas fa-columns mr-2"></i>
+                    Comparer avant/après
+                </button>
+                <button @click="startOver" class="btn btn-secondary">
+                    <i class="fas fa-redo mr-2"></i>
+                    Nouveau fichier
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+<script>
+function imputationApp() {
+    return {
+        currentStep: 1,
+        fileId: null,
+        fileName: null,
+        isDragging: false,
+        uploadProgress: 0,
+        isProcessing: false,
+        isLoadingRecommendations: false,
+        analysis: {},
+        columnsAnalysis: [],
+        recommendations: {},
+        selectedColumns: [],
+        userConfig: {},
+        report: {},
+        imputedPreview: [],
+        imputedCells: {},
+        availableMethods: [
+            { value: 'mean', label: 'Moyenne', icon: 'fas fa-chart-line', desc: 'Simple et rapide' },
+            { value: 'median', label: 'Médiane', icon: 'fas fa-chart-bar', desc: 'Résiste aux valeurs extrêmes' },
+            { value: 'mode', label: 'Mode', icon: 'fas fa-hashtag', desc: 'Valeur la plus fréquente' },
+            { value: 'group_mean', label: 'Moy. Groupe', icon: 'fas fa-users', desc: 'Moyenne par catégorie' },
+            { value: 'group_median', label: 'Méd. Groupe', icon: 'fas fa-users', desc: 'Médiane par catégorie' },
+            { value: 'group_mode', label: 'Mode Groupe', icon: 'fas fa-users', desc: 'Mode par catégorie' },
+            { value: 'knn', label: 'KNN', icon: 'fas fa-project-diagram', desc: 'Voisins les plus proches' },
+            { value: 'forward_fill', label: 'Propagation', icon: 'fas fa-arrow-right', desc: 'Valeur précédente' },
+            { value: 'mice', label: 'MICE', icon: 'fas fa-brain', desc: '⭐ Itératif multivarié' },
+            { value: 'random_forest', label: 'Random Forest', icon: 'fas fa-tree', desc: '⭐ ML - très précis' },
+            { value: 'linear_regression', label: 'Régression', icon: 'fas fa-chart-line', desc: '⭐ Relations linéaires' },
+            { value: 'interpolation_linear', label: 'Interpolation', icon: 'fas fa-wave-square', desc: 'Séries temporelles' },
+        ],
+
+        handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.uploadFile(file);
+            }
+        },
+
+        handleFileDrop(event) {
+            this.isDragging = false;
+            const file = event.dataTransfer.files[0];
+            if (file) {
+                this.uploadFile(file);
+            }
+        },
+
+        async uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            this.uploadProgress = 10;
+            this.fileName = file.name;
+            
+            // Afficher message si gros fichier
+            const fileSize = file.size / 1024 / 1024; // MB
+            if (fileSize > 10) {
+                NotificationManager.info(`Fichier volumineux (${fileSize.toFixed(1)} MB) - Le traitement peut prendre quelques secondes...`);
+            }
+
+            try {
+                const response = await fetch('/imputation/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                this.uploadProgress = 100;
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    NotificationManager.error('Erreur: ' + error.error);
+                    this.uploadProgress = 0;
+                    return;
+                }
+
+                const data = await response.json();
+                this.fileId = data.file_id;
+                this.analysis = data.analysis;
+                this.currentStep = 2;
+                
+                // Message informatif si échantillonnage
+                if (data.analysis.is_sampled) {
+                    NotificationManager.info('Fichier volumineux : l\'analyse a été effectuée sur un échantillon de 10 000 lignes pour optimiser la performance.');
+                }
+                
+                NotificationManager.success('Fichier chargé avec succès!');
+
+            } catch (error) {
+                NotificationManager.error('Erreur lors de l\'upload: ' + error.message);
+                this.uploadProgress = 0;
+            }
+        },
+
+        async loadDetailedAnalysis() {
+            try {
+                const response = await fetch(`/imputation/analysis/${this.fileId}`);
+                const data = await response.json();
+                this.columnsAnalysis = data.columns;
+            } catch (error) {
+                NotificationManager.error('Erreur lors du chargement de l\'analyse: ' + error.message);
+            }
+        },
+
+        goToConfiguration() {
+            this.currentStep = 3;
+        },
+
+        async loadRecommendations() {
+            this.isLoadingRecommendations = true;
+            try {
+                const response = await fetch(`/imputation/recommendations/${this.fileId}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    NotificationManager.error('Erreur: ' + data.error);
+                    return;
+                }
+                
+                this.recommendations = data.recommendations;
+                // Sélectionner automatiquement toutes les colonnes
+                this.selectedColumns = Object.keys(this.recommendations);
+                NotificationManager.success('Recommandations générées avec succès!');
+            } catch (error) {
+                NotificationManager.error('Erreur: ' + error.message);
+            } finally {
+                this.isLoadingRecommendations = false;
+            }
+        },
+
+        toggleColumn(colName) {
+            const index = this.selectedColumns.indexOf(colName);
+            if (index > -1) {
+                this.selectedColumns.splice(index, 1);
+            } else {
+                this.selectedColumns.push(colName);
+            }
+        },
+
+        selectAllColumns() {
+            this.selectedColumns = Object.keys(this.recommendations);
+        },
+
+        deselectAllColumns() {
+            this.selectedColumns = [];
+        },
+
+        setColumnMethod(colName, method) {
+            if (!this.userConfig[colName]) {
+                this.userConfig[colName] = {};
+            }
+            this.userConfig[colName].method = method;
+        },
+
+        setColumnKNN(colName, k) {
+            if (!this.userConfig[colName]) {
+                this.userConfig[colName] = {};
+            }
+            this.userConfig[colName].k_neighbors = parseInt(k);
+        },
+
+        async executeImputation() {
+            if (this.selectedColumns.length === 0) {
+                NotificationManager.error('Veuillez sélectionner au moins une colonne à imputer');
+                return;
+            }
+
+            this.isProcessing = true;
+            
+            // Message si beaucoup de colonnes
+            if (this.selectedColumns.length > 10) {
+                NotificationManager.info(`Imputation de ${this.selectedColumns.length} colonnes en cours... Cela peut prendre 1-2 minutes.`);
+            }
+
+            // Construire la configuration uniquement pour les colonnes sélectionnées
+            const configuration = {};
+            for (const colName of this.selectedColumns) {
+                const defaultConfig = this.recommendations[colName];
+                const userConf = this.userConfig[colName] || {};
+                
+                // Utiliser la config utilisateur si définie, sinon les recommandations
+                const method = userConf.method || defaultConfig.method;
+                
+                configuration[colName] = {
+                    method: method,
+                    parameters: {
+                        grouping_columns: defaultConfig.grouping_columns || [],
+                        k_neighbors: userConf.k_neighbors || 5
+                    }
+                };
+            }
+
+            try {
+                const response = await fetch('/imputation/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file_id: this.fileId,
+                        configuration: configuration
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    NotificationManager.error('Erreur: ' + data.error);
+                    this.isProcessing = false;
+                    return;
+                }
+
+                this.report = data.report;
+                this.imputedPreview = data.preview || [];
+                this.imputedCells = data.imputed_cells || {};
+                this.currentStep = 4;
+
+                // Attendre que le DOM soit mis à jour
+                this.$nextTick(() => {
+                    this.renderImputedTable();
+                });
+
+                NotificationManager.success(`Imputation terminée! ${data.report.total_corrections} valeurs corrigées`);
+
+            } catch (error) {
+                NotificationManager.error('Erreur: ' + error.message);
+            } finally {
+                this.isProcessing = false;
+            }
+        },
+
+        renderImputedTable() {
+            if (!this.imputedPreview || this.imputedPreview.length === 0) return;
+
+            const columns = Object.keys(this.imputedPreview[0]).map(field => ({
+                title: field,
+                field: field,
+                formatter: (cell) => {
+                    const rowIndex = cell.getRow().getPosition();
+                    const fieldName = cell.getField();
+                    const value = cell.getValue();
+                    
+                    // Vérifier si cette cellule a été imputée
+                    const isImputed = this.imputedCells[fieldName] && 
+                                     this.imputedCells[fieldName].includes(rowIndex);
+                    
+                    if (isImputed) {
+                        return `<span class="imputed-cell">${value !== null && value !== undefined ? value : ''}</span>`;
+                    }
+                    return value !== null && value !== undefined ? value : '';
+                }
+            }));
+
+            new Tabulator("#imputedDataTable", {
+                data: this.imputedPreview,
+                columns: columns,
+                layout: "fitColumns",
+                height: "400px",
+                pagination: true,
+                paginationSize: 50,
+                paginationSizeSelector: [25, 50, 100, 200],
+                placeholder: "Aucune donnée à afficher",
+            });
+        },
+
+        async startOver() {
+            await fetch('/imputation/clear', { method: 'POST' });
+            this.currentStep = 1;
+            this.fileId = null;
+            this.fileName = null;
+            this.uploadProgress = 0;
+            this.analysis = {};
+            this.columnsAnalysis = [];
+            this.recommendations = {};
+            this.selectedColumns = [];
+            this.userConfig = {};
+            this.report = {};
+            this.imputedPreview = [];
+            this.imputedCells = {};
+        },
+
+        getQualityColorClass(score) {
+            if (score >= 80) return 'bg-green-500';
+            if (score >= 60) return 'bg-yellow-500';
+            return 'bg-red-500';
+        }
+    };
+}
+</script>
+{% endblock %}

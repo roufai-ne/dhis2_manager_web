@@ -16,6 +16,51 @@ bp = Blueprint('generator', __name__, url_prefix='/generator')
 logger = logging.getLogger(__name__)
 
 
+def _get_parent_name(metadata: MetadataManager, org_unit_ids: list) -> str:
+    """
+    Trouve le nom du parent direct commun des unités d'organisation sélectionnées.
+    Si toutes les unités ont le même parent direct, retourne son nom.
+    Sinon, retourne le nom de la première unité sélectionnée.
+    
+    Args:
+        metadata: Instance du MetadataManager
+        org_unit_ids: Liste des IDs des unités d'organisation sélectionnées
+    
+    Returns:
+        Nom du parent ou de la première unité (sans espaces)
+    """
+    if not org_unit_ids:
+        return ""
+    
+    # Si une seule unité, retourner son nom
+    if len(org_unit_ids) == 1:
+        org = metadata.org_units_map.get(org_unit_ids[0])
+        if org:
+            return org.get('name', '').replace(' ', '_')
+        return ""
+    
+    # Trouver le parent direct de chaque unité
+    parent_ids = set()
+    for org_id in org_unit_ids:
+        org = metadata.org_units_map.get(org_id)
+        if org and org.get('parent', {}).get('id'):
+            parent_ids.add(org['parent']['id'])
+    
+    # Si toutes les unités ont le même parent, utiliser ce parent
+    if len(parent_ids) == 1:
+        parent_id = list(parent_ids)[0]
+        parent = metadata.org_units_map.get(parent_id)
+        if parent:
+            return parent.get('name', '').replace(' ', '_')
+    
+    # Sinon, utiliser le nom de la première unité
+    first_org = metadata.org_units_map.get(org_unit_ids[0])
+    if first_org:
+        return first_org.get('name', '').replace(' ', '_')
+    
+    return ""
+
+
 @bp.route('/')
 def generator_page():
     """Affiche le générateur de modèles"""
@@ -187,9 +232,15 @@ def generate_template():
         session_dir = project_root / 'sessions' / session.sid
         session_dir.mkdir(parents=True, exist_ok=True)
         
-        # Nom du fichier
+        # Trouver le parent commun des unités d'organisation
+        parent_name = _get_parent_name(metadata, org_unit_ids)
+        
+        # Nom du fichier avec le parent
         dataset_name = stats.get('dataset_name', 'dataset').replace(' ', '_')
-        filename = f"Template_{dataset_name}_{period}.xlsx"
+        if parent_name:
+            filename = f"Template_{parent_name}_{dataset_name}_{period}.xlsx"
+        else:
+            filename = f"Template_{dataset_name}_{period}.xlsx"
         filepath = session_dir / filename
         
         # Créer le fichier Excel

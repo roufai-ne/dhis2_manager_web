@@ -114,11 +114,15 @@ class MetadataManager:
             # Organisations
             for ou in self.raw_data.get('organisationUnits', []):
                 self.org_units_map[ou['id']] = ou
-                self.org_name_to_id[ou['name'].strip().lower()] = ou['id']
+                
+                # Normaliser le nom: supprimer espaces multiples, trim et lowercase
+                org_name_normalized = ' '.join(ou['name'].strip().split()).lower()
+                self.org_name_to_id[org_name_normalized] = ou['id']
 
-                # Ajouter aussi le mapping par code si présent
+                # Ajouter aussi le mapping par code si présent (PRIORITAIRE)
                 if ou.get('code'):
-                    self.org_code_to_id[ou['code'].strip().lower()] = ou['id']
+                    org_code_normalized = ' '.join(ou['code'].strip().split()).lower()
+                    self.org_code_to_id[org_code_normalized] = ou['id']
 
                 parent_id = ou.get('parent', {}).get('id')
                 if parent_id:

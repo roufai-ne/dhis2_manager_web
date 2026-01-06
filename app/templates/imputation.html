@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block title %}Imputation Automatique - DHIS2 Manager{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-50" x-data="imputationApp()">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{{ url_for('main.index') }}" class="text-2xl font-bold text-primary">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        DHIS2 Manager
+                    </a>
+                    <span class="ml-4 text-gray-400">|</span>
+                    <span class="ml-4 text-lg font-semibold text-gray-700">Imputation Automatique</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('main.help_page') }}" class="text-gray-600 hover:text-primary">
+                        <i class="fas fa-question-circle mr-1"></i> Aide
+                    </a>
+                    <a href="{{ url_for('main.index') }}" class="btn-secondary">
+                        <i class="fas fa-home mr-1"></i> Accueil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex-1" :class="{'opacity-50': currentStep < 1}">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                             :class="currentStep >= 1 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium" :class="currentStep >= 1 ? 'text-primary' : 'text-gray-500'">
+                                Étape 1
+                            </div>
+                            <div class="text-xs text-gray-500">Upload fichier</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 border-t-2 mx-4" :class="currentStep >= 2 ? 'border-primary' : 'border-gray-300'"></div>
+
+                <div class="flex-1" :class="{'opacity-50': currentStep < 2}">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                             :class="currentStep >= 2 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium" :class="currentStep >= 2 ? 'text-primary' : 'text-gray-500'">
+                                Étape 2
+                            </div>
+                            <div class="text-xs text-gray-500">Analyse</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 border-t-2 mx-4" :class="currentStep >= 3 ? 'border-primary' : 'border-gray-300'"></div>
+
+                <div class="flex-1" :class="{'opacity-50': currentStep < 3}">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                             :class="currentStep >= 3 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium" :class="currentStep >= 3 ? 'text-primary' : 'text-gray-500'">
+                                Étape 3
+                            </div>
+                            <div class="text-xs text-gray-500">Configuration</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 border-t-2 mx-4" :class="currentStep >= 4 ? 'border-primary' : 'border-gray-300'"></div>
+
+                <div class="flex-1" :class="{'opacity-50': currentStep < 4}">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                             :class="currentStep >= 4 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium" :class="currentStep >= 4 ? 'text-primary' : 'text-gray-500'">
+                                Étape 4
+                            </div>
+                            <div class="text-xs text-gray-500">Résultats</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Upload -->
+        <div x-show="currentStep === 1" class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-upload text-primary mr-2"></i>
+                Importer un fichier
+            </h2>
+            <p class="text-gray-600 mb-6">
+                Uploadez un fichier Excel (.xlsx, .xls) ou CSV contenant des données avec valeurs manquantes.
+            </p>
+
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-primary transition"
+                 @dragover.prevent="isDragging = true"
+                 @dragleave.prevent="isDragging = false"
+                 @drop.prevent="handleFileDrop"
+                 :class="{'border-primary bg-blue-50': isDragging}">
+                <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+                <p class="text-lg mb-2">Glissez-déposez votre fichier ici</p>
+                <p class="text-gray-500 mb-4">ou</p>
+                <label class="btn-primary cursor-pointer">
+                    <i class="fas fa-folder-open mr-2"></i>
+                    Parcourir les fichiers
+                    <input type="file" @change="handleFileSelect" accept=".xlsx,.xls,.csv" class="hidden">
+                </label>
+                <p class="text-sm text-gray-500 mt-4">
+                    Formats acceptés: Excel (.xlsx, .xls), CSV • Taille max: 50 Mo
+                </p>
+            </div>
+
+            <div x-show="uploadProgress > 0 && uploadProgress < 100" class="mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-primary h-2 rounded-full transition-all" :style="`width: ${uploadProgress}%`"></div>
+                </div>
+                <p class="text-sm text-gray-600 mt-1" x-text="`Upload: ${uploadProgress}%`"></p>
+            </div>
+        </div>
+
+        <!-- Step 2: Analysis -->
+        <div x-show="currentStep === 2" class="space-y-6">
+            <!-- Summary Card -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                    <i class="fas fa-chart-bar text-primary mr-2"></i>
+                    Analyse de la qualité des données
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-600">Lignes</div>
+                        <div class="text-2xl font-bold text-primary" x-text="analysis.total_rows"></div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-600">Colonnes</div>
+                        <div class="text-2xl font-bold text-green-600" x-text="analysis.total_columns"></div>
+                    </div>
+                    <div class="bg-red-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-600">Valeurs manquantes</div>
+                        <div class="text-2xl font-bold text-red-600" x-text="analysis.total_missing"></div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-600">Score qualité</div>
+                        <div class="text-2xl font-bold text-purple-600" x-text="analysis.global_quality_score + '%'"></div>
+                    </div>
+                </div>
+
+                <button @click="loadDetailedAnalysis" class="btn-primary">
+                    <i class="fas fa-microscope mr-2"></i>
+                    Voir analyse détaillée
+                </button>
+            </div>
+
+            <!-- Columns Table -->
+            <div x-show="columnsAnalysis.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold">Analyse par colonne</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Colonne</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Manquants</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aberrants</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qualité</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="col in columnsAnalysis" :key="col.name">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap font-medium" x-text="col.name"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs rounded bg-blue-100 text-blue-800" x-text="col.type"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span x-text="col.missing_count + ' (' + col.missing_percent + '%)'"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap" x-text="col.outliers_count"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                                <div class="h-2 rounded-full"
+                                                     :style="`width: ${col.quality_score}%; background-color: ${getQualityColor(col.quality_score)}`">
+                                                </div>
+                                            </div>
+                                            <span class="text-sm" x-text="col.quality_score + '%'"></span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button @click="currentStep = 1" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Retour
+                </button>
+                <button @click="goToConfiguration" class="btn-primary">
+                    Continuer vers configuration
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Configuration -->
+        <div x-show="currentStep === 3" class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-cogs text-primary mr-2"></i>
+                Configuration de l'imputation
+            </h2>
+
+            <div class="mb-6">
+                <button @click="loadRecommendations" class="btn-primary">
+                    <i class="fas fa-magic mr-2"></i>
+                    Obtenir les recommandations automatiques
+                </button>
+            </div>
+
+            <div x-show="Object.keys(recommendations).length > 0" class="space-y-4">
+                <template x-for="(config, colName) in recommendations" :key="colName">
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-lg" x-text="colName"></h4>
+                            <span class="px-3 py-1 rounded-full text-sm"
+                                  :class="config.missing_percent > 40 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'"
+                                  x-text="config.missing_count + ' manquants (' + config.missing_percent.toFixed(1) + '%)'">
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">
+                            <strong>Méthode recommandée:</strong>
+                            <span class="ml-2 px-2 py-1 bg-primary text-white rounded" x-text="config.method"></span>
+                        </div>
+                        <div x-show="config.grouping_columns && config.grouping_columns.length > 0" class="text-sm text-gray-600">
+                            <strong>Variables prédictives:</strong>
+                            <span class="ml-2" x-text="config.grouping_columns.join(', ')"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="flex justify-between mt-8">
+                <button @click="currentStep = 2" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Retour
+                </button>
+                <button @click="executeImputation" class="btn-primary" :disabled="isProcessing">
+                    <i class="fas fa-play mr-2"></i>
+                    <span x-text="isProcessing ? 'Traitement en cours...' : 'Exécuter l\'imputation'"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Results -->
+        <div x-show="currentStep === 4" class="space-y-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                    Imputation terminée avec succès!
+                </h2>
+
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-green-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-green-700">
+                                <span x-text="report.total_corrections"></span> valeurs ont été imputées avec succès.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <template x-for="(info, colName) in report.corrections_by_column" :key="colName">
+                        <div class="border-l-4 border-blue-500 pl-4 py-2">
+                            <div class="font-medium" x-text="colName"></div>
+                            <div class="text-sm text-gray-600">
+                                Méthode: <span class="font-medium" x-text="info.method"></span> •
+                                Corrections: <span class="font-medium" x-text="info.corrections_count"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="mt-8 flex space-x-4">
+                    <a :href="`/imputation/download/${fileId}`" class="btn-primary">
+                        <i class="fas fa-download mr-2"></i>
+                        Télécharger le fichier corrigé
+                    </a>
+                    <button @click="startOver" class="btn-secondary">
+                        <i class="fas fa-redo mr-2"></i>
+                        Nouveau fichier
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-primary {
+        @apply inline-flex items-center px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-indigo-700 transition;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition;
+    }
+
+    .btn-primary:disabled {
+        @apply opacity-50 cursor-not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function imputationApp() {
+    return {
+        currentStep: 1,
+        fileId: null,
+        fileName: null,
+        isDragging: false,
+        uploadProgress: 0,
+        isProcessing: false,
+        analysis: {
+            total_rows: 0,
+            total_columns: 0,
+            total_missing: 0,
+            missing_percentage: 0,
+            global_quality_score: 0
+        },
+        columnsAnalysis: [],
+        recommendations: {},
+        report: {},
+
+        handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.uploadFile(file);
+            }
+        },
+
+        handleFileDrop(event) {
+            this.isDragging = false;
+            const file = event.dataTransfer.files[0];
+            if (file) {
+                this.uploadFile(file);
+            }
+        },
+
+        async uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            this.uploadProgress = 10;
+            this.fileName = file.name;
+
+            try {
+                const response = await fetch('/imputation/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                this.uploadProgress = 100;
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert('Erreur: ' + error.error);
+                    this.uploadProgress = 0;
+                    return;
+                }
+
+                const data = await response.json();
+                this.fileId = data.file_id;
+                this.analysis = data.analysis;
+                this.currentStep = 2;
+
+            } catch (error) {
+                alert('Erreur lors de l\'upload: ' + error.message);
+                this.uploadProgress = 0;
+            }
+        },
+
+        async loadDetailedAnalysis() {
+            try {
+                const response = await fetch(`/imputation/analysis/${this.fileId}`);
+                const data = await response.json();
+                this.columnsAnalysis = data.columns;
+            } catch (error) {
+                alert('Erreur lors du chargement de l\'analyse: ' + error.message);
+            }
+        },
+
+        async goToConfiguration() {
+            this.currentStep = 3;
+        },
+
+        async loadRecommendations() {
+            try {
+                const response = await fetch(`/imputation/recommendations/${this.fileId}`);
+                const data = await response.json();
+                this.recommendations = data.recommendations;
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            }
+        },
+
+        async executeImputation() {
+            this.isProcessing = true;
+
+            // Construire la configuration
+            const configuration = {};
+            for (const [colName, config] of Object.entries(this.recommendations)) {
+                configuration[colName] = {
+                    method: config.method,
+                    parameters: {
+                        grouping_columns: config.grouping_columns || []
+                    }
+                };
+            }
+
+            try {
+                const response = await fetch('/imputation/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file_id: this.fileId,
+                        configuration: configuration
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert('Erreur: ' + data.error);
+                    this.isProcessing = false;
+                    return;
+                }
+
+                this.report = data.report;
+                this.currentStep = 4;
+
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            } finally {
+                this.isProcessing = false;
+            }
+        },
+
+        async startOver() {
+            await fetch('/imputation/clear', { method: 'POST' });
+            this.currentStep = 1;
+            this.fileId = null;
+            this.analysis = { total_rows: 0, total_columns: 0, total_missing: 0, missing_percentage: 0, global_quality_score: 0 };
+            this.columnsAnalysis = [];
+            this.recommendations = {};
+            this.report = {};
+        },
+
+        getQualityColor(score) {
+            if (score >= 80) return '#10b981';
+            if (score >= 60) return '#f59e0b';
+            return '#ef4444';
+        }
+    };
+}
+</script>
+{% endblock %}

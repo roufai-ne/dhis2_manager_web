@@ -266,13 +266,14 @@ class DataCalculator:
                     continue
 
                 # Résoudre organisation
+                # Normaliser: supprimer espaces multiples, trim et lowercase
                 org_name = str(org_col).strip()
-                org_key = org_name.lower()
+                org_key = ' '.join(org_name.split()).lower()  # Normalise les espaces multiples
 
-                # Essayer par code d'abord
+                # Essayer par code d'abord (PRIORITAIRE)
                 org_id = self.metadata.org_code_to_id.get(org_key)
 
-                # Fallback sur le nom
+                # Fallback sur le nom seulement si code non trouvé
                 if not org_id:
                     org_id = self.metadata.org_name_to_id.get(org_key)
 
@@ -387,10 +388,11 @@ class DataCalculator:
         
         for _, row in grouped.iterrows():
             # Résoudre l'organisation (d'abord par code, puis par nom)
+            # Normaliser: supprimer espaces multiples, trim et lowercase
             org_value = str(row[column_mapping['org']]).strip()
-            org_key = org_value.lower()
+            org_key = ' '.join(org_value.split()).lower()  # Normalise les espaces multiples
 
-            # Essayer d'abord par code (plus fiable)
+            # Essayer d'abord par code (PRIORITAIRE et plus fiable)
             org_id = self.metadata.org_code_to_id.get(org_key)
 
             # Fallback sur le nom si code non trouvé
