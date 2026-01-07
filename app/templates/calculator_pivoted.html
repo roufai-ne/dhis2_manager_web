@@ -94,6 +94,13 @@
 let extractedData = null;
 let dhis2DataElements = [];
 
+// Fonction pour nettoyer les noms (enlever espaces avant/après et normaliser les caractères insécables)
+function cleanName(name) {
+    if (!name) return '';
+    // Remplacer les caractères d'espacement insécables par des espaces normaux, puis trim
+    return name.replace(/[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000]/g, ' ').trim();
+}
+
 // Load DHIS2 Data Elements on page load
 fetch('/calculator/api/get-dhis2-data-elements')
     .then(r => r.json())
@@ -229,14 +236,14 @@ function autoMatch() {
 
     // Simple fuzzy matching
     document.querySelectorAll('select[id^="mapping-"]').forEach(select => {
-        const deName = select.dataset.deName.toLowerCase().trim();
+        const deName = cleanName(select.dataset.deName.toLowerCase());
         
         // Find best match
         let bestMatch = null;
         let bestScore = 0;
 
         dhis2DataElements.forEach(dhis2De => {
-            const dhis2Name = dhis2De.name.toLowerCase().trim();
+            const dhis2Name = cleanName(dhis2De.name.toLowerCase());
             
             // Exact match
             if (dhis2Name === deName) {

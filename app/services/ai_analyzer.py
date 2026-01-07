@@ -320,6 +320,14 @@ IMPORTANT: Les noms de colonnes doivent correspondre EXACTEMENT aux colonnes du 
         Returns:
             Dict avec les data elements extraits et matchés avec DHIS2
         """
+        def clean_name(name: str) -> str:
+            """Nettoie les noms en enlevant espaces avant/après et normalisant les caractères insécables."""
+            if not name:
+                return ''
+            import re
+            # Remplacer les caractères d'espacement insécables par des espaces normaux, puis trim
+            return re.sub(r'[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000]', ' ', name).strip()
+        
         try:
             df = pd.read_excel(file_path)
             columns = list(df.columns)
@@ -335,7 +343,7 @@ IMPORTANT: Les noms de colonnes doivent correspondre EXACTEMENT aux colonnes du 
                     # Construire un index des DE par nom (lowercase pour matching)
                     for de_id, de_info in metadata['data_elements_map'].items():
                         de_name = de_info.get('name') or de_info.get('displayName', '')
-                        de_name_lower = de_name.lower().strip()
+                        de_name_lower = clean_name(de_name).lower()
                         
                         # Trouver la section du DE
                         de_section = None
@@ -394,7 +402,7 @@ IMPORTANT: Les noms de colonnes doivent correspondre EXACTEMENT aux colonnes du 
                     if dhis2_de_names:
                         # Compter combien de valeurs matchent des DE DHIS2
                         for val in unique_values:
-                            val_lower = str(val).strip().lower()
+                            val_lower = clean_name(str(val)).lower()
                             if val_lower and val_lower != '-' and val_lower in dhis2_de_names:
                                 matched_count += 1
                                 if len(matched_examples) < 3:
@@ -430,7 +438,7 @@ IMPORTANT: Les noms de colonnes doivent correspondre EXACTEMENT aux colonnes du 
                         for val in unique_values:
                             val_str = str(val).strip()
                             if val_str and val_str != '-':
-                                val_lower = val_str.lower()
+                                val_lower = clean_name(val_str).lower()
                                 
                                 # Chercher dans DHIS2 DE
                                 dhis2_match = dhis2_de_names.get(val_lower) if dhis2_de_names else None
@@ -463,7 +471,7 @@ IMPORTANT: Les noms de colonnes doivent correspondre EXACTEMENT aux colonnes du 
                     for val in unique_values:
                         val_str = str(val).strip()
                         if val_str and val_str != '-':
-                            val_lower = val_str.lower()
+                            val_lower = clean_name(val_str).lower()
                             
                             # Chercher dans DHIS2 DE
                             dhis2_match = dhis2_de_names.get(val_lower) if dhis2_de_names else None
