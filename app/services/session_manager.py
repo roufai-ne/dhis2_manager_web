@@ -66,20 +66,26 @@ def cleanup_old_sessions(max_age_hours: int = 2) -> int:
     
     try:
         for session_dir in sessions_dir.iterdir():
-            if session_dir.is_dir():
-                # Vérifier la date de modification
-                try:
+            try:
+                if session_dir.is_dir():
+                    # Vérifier la date de modification
                     mtime = datetime.fromtimestamp(session_dir.stat().st_mtime)
                     if mtime < cutoff:
                         shutil.rmtree(session_dir)
                         cleaned_count += 1
                         logger.info(f"Session expirée nettoyée: {session_dir.name}")
-                except Exception as e:
-                    logger.error(f"Erreur lors du nettoyage de {session_dir.name}: {e}")
+            except (KeyboardInterrupt, SystemExit):
+                # Arrêt demandé, on quitte proprement
+                return cleaned_count
+            except Exception as e:
+                logger.error(f"Erreur lors du nettoyage de {session_dir.name}: {e}")
                     
         if cleaned_count > 0:
             logger.info(f"Total de {cleaned_count} session(s) expirée(s) nettoyée(s)")
             
+    except (KeyboardInterrupt, SystemExit):
+        # Arrêt demandé, on quitte proprement sans erreur
+        return cleaned_count
     except Exception as e:
         logger.error(f"Erreur lors du nettoyage des sessions: {e}")
     

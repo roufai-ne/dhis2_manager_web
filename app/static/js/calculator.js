@@ -960,7 +960,7 @@ function downloadJson() {
 }
 
 function sendToDhis2() {
-    NotificationManager.warning('Envoi vers DHIS2 en cours...', 'Confirmation');
+    NotificationManager.warning('Envoi vers DHIS2 en cours...', 3000);
 
     setTimeout(() => {
         LoadingOverlay.show('Envoi vers DHIS2 en cours...');
@@ -971,20 +971,20 @@ function sendToDhis2() {
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    NotificationManager.success(data.message);
+                    NotificationManager.success(data.message, 5000);
                     // Show details if available
                     if (data.details && data.details.importCount) {
                         const counts = data.details.importCount;
                         NotificationManager.info(
-                            `Importés: ${counts.imported} | Mis à jour: ${counts.updated} | Ignorés: ${counts.ignored} | Supprimés: ${counts.deleted}`,
-                            'Détails de l\'import'
+                            `📊 Détails de l'import - Importés: ${counts.imported} | Mis à jour: ${counts.updated} | Ignorés: ${counts.ignored} | Supprimés: ${counts.deleted}`,
+                            8000
                         );
                     }
                 } else {
-                    NotificationManager.error(data.error || 'Erreur lors de l\'envoi');
+                    NotificationManager.error(data.error || 'Erreur lors de l\'envoi', 6000);
                 }
             })
-            .catch(e => NotificationManager.error('Erreur réseau'))
+            .catch(e => NotificationManager.error('Erreur réseau: ' + (e.message || e), 6000))
             .finally(() => LoadingOverlay.hide());
     }, 100);
 }
@@ -1614,6 +1614,15 @@ document.getElementById('btn-tcd-process')?.addEventListener('click', async func
 function displayTCDReport(data) {
     const stats = data.stats;
 
+    // Réinitialiser toutes les sections d'erreurs avant d'afficher le nouveau rapport
+    document.getElementById('tcd-errors-container').classList.add('hidden');
+    document.getElementById('tcd-unmapped-orgs').classList.add('hidden');
+    document.getElementById('tcd-unmapped-des').classList.add('hidden');
+    
+    // Vider les listes d'erreurs
+    document.getElementById('tcd-unmapped-orgs-list').innerHTML = '';
+    document.getElementById('tcd-unmapped-des-list').innerHTML = '';
+
     // Update stats
     document.getElementById('tcd-stat-lignes').textContent = stats.lignes_traitees || 0;
     document.getElementById('tcd-stat-valeurs').textContent = stats.valeurs_inserees || 0;
@@ -2113,7 +2122,7 @@ async function processAuto() {
     const period = document.getElementById('auto-period').value;
 
     if (!autoTemplateFile || !sheetName || !colDE || !period) {
-        NotificationManager.error('Veuillez remplir tous les champs requis');
+        NotificationManager.error('Veuillez remplir tous les champs requis', 5000);
         return;
     }
 
@@ -2124,7 +2133,7 @@ async function processAuto() {
     });
 
     if (category_cols.length === 0) {
-        NotificationManager.error('Veuillez sélectionner au moins une colonne de catégorie (ex: Sexe)');
+        NotificationManager.error('Veuillez sélectionner au moins une colonne de catégorie (ex: Sexe)', 6000);
         return;
     }
 
@@ -2149,12 +2158,12 @@ async function processAuto() {
     });
 
     if (Object.keys(etablissements_patterns).length === 0) {
-        NotificationManager.error('Veuillez ajouter au moins un mapping établissement');
+        NotificationManager.error('Veuillez ajouter au moins un mapping établissement', 5000);
         return;
     }
 
     if (Object.keys(data_elements_manuels).length === 0) {
-        NotificationManager.error('Veuillez ajouter au moins un mapping data element');
+        NotificationManager.error('Veuillez ajouter au moins un mapping data element', 5000);
         return;
     }
 
@@ -2167,7 +2176,6 @@ async function processAuto() {
             body: JSON.stringify({
                 tcd_sheet: sheetName,
                 col_data_element: colDE,
-                period: period,
                 period: period,
                 config: {
                     etablissements_patterns: etablissements_patterns,
@@ -2196,9 +2204,10 @@ async function processAuto() {
             // Scroller vers le rapport
             document.getElementById('auto-step5').scrollIntoView({ behavior: 'smooth' });
 
-            NotificationManager.success(`Traitement terminé: ${data.total_values} valeurs générées`);
+            // Notification avec durée appropriée pour lecture
+            NotificationManager.success(`Traitement terminé: ${data.total_values} valeurs générées`, 6000);
         } else {
-            NotificationManager.error('Erreur: ' + data.error);
+            NotificationManager.error('Erreur: ' + (data.error || 'Erreur inconnue'), 7000);
             if (data.stats) {
                 displayAutoReport(data);
                 document.getElementById('auto-step5').classList.remove('hidden');
@@ -2207,13 +2216,24 @@ async function processAuto() {
     } catch (error) {
         LoadingOverlay.hide();
         console.error('[Auto] Erreur traitement:', error);
-        NotificationManager.error('Erreur lors du traitement');
+        NotificationManager.error('Erreur lors du traitement: ' + (error.message || error), 7000);
     }
 }
 
 // Afficher rapport
 function displayAutoReport(data) {
     const stats = data.stats;
+
+    // Réinitialiser toutes les sections d'erreurs avant d'afficher le nouveau rapport
+    document.getElementById('auto-errors-container').classList.add('hidden');
+    document.getElementById('auto-unmapped-orgs').classList.add('hidden');
+    document.getElementById('auto-unmapped-des').classList.add('hidden');
+    document.getElementById('auto-not-found').classList.add('hidden');
+    
+    // Vider les listes d'erreurs
+    document.getElementById('auto-unmapped-orgs-list').innerHTML = '';
+    document.getElementById('auto-unmapped-des-list').innerHTML = '';
+    document.getElementById('auto-not-found-list').innerHTML = '';
 
     // Statistiques
     document.getElementById('auto-stat-lignes').textContent = stats.lignes_traitees || 0;

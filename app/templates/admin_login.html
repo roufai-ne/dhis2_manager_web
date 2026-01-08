@@ -91,16 +91,16 @@
                     const result = await response.json();
                     
                     if (result.success) {
-                        NotificationManager.success('Connexion réussie', 'Admin');
+                        NotificationManager.success('Connexion réussie', 4000);
                         setTimeout(() => {
                             window.location.href = result.redirect;
                         }, 500);
                     } else {
-                        NotificationManager.error(result.error || 'Identifiants incorrects', 'Erreur');
+                        NotificationManager.error(result.error || 'Identifiants incorrects', 5000);
                         document.getElementById('password').value = '';
                     }
                 } catch (error) {
-                    NotificationManager.error('Erreur de connexion', 'Erreur');
+                    NotificationManager.error('Erreur de connexion', 5000);
                     console.error(error);
                 }
             });

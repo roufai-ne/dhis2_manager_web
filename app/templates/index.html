@@ -345,7 +345,7 @@
         const clearBtn = document.getElementById('clear-session-btn');
         if (clearBtn) {
             clearBtn.addEventListener('click', async function () {
-                NotificationManager.warning('Effacement des fichiers de session en cours...', 'Confirmation');
+                NotificationManager.warning('Effacement des fichiers de session en cours...', 3000);
                 
                 setTimeout(async () => {
                     LoadingOverlay.show('Nettoyage de la session...');

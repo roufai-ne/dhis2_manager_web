@@ -86,10 +86,9 @@ def create_app(config_name='default'):
     
     # Service de nettoyage des sessions au démarrage
     from app.services.session_manager import cleanup_old_sessions
-    cleanup_old_sessions(app.config['SESSION_CLEANUP_HOURS'])
-    
-    # Enregistrer le nettoyage à l'arrêt
-    import atexit
-    atexit.register(lambda: cleanup_old_sessions(app.config['SESSION_CLEANUP_HOURS']))
+    try:
+        cleanup_old_sessions(app.config['SESSION_CLEANUP_HOURS'])
+    except Exception as e:
+        logger.warning(f"Erreur lors du nettoyage initial des sessions: {e}")
     
     return app

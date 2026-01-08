@@ -335,7 +335,7 @@
         const disconnectBtn = document.getElementById('disconnect-btn');
         if (disconnectBtn) {
             disconnectBtn.addEventListener('click', function () {
-                NotificationManager.warning('Déconnexion en cours...', 'Confirmation');
+                NotificationManager.warning('Déconnexion en cours...', 3000);
 
                 setTimeout(handleDisconnect, 500);
             });
@@ -362,7 +362,7 @@
         const clearMetadataBtn = document.getElementById('clear-metadata-btn');
         if (clearMetadataBtn) {
             clearMetadataBtn.addEventListener('click', function () {
-                NotificationManager.warning('Effacement des métadonnées en cours...', 'Confirmation');
+                NotificationManager.warning('Effacement des métadonnées en cours...', 3000);
 
                 setTimeout(() => {
                     document.getElementById('clear-metadata-form').submit();

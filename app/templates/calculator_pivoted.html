@@ -316,7 +316,7 @@ function validateMapping() {
 }
 
 function resetMapping() {
-    NotificationManager.warning('Réinitialisation des mappings...', 'Confirmation');
+    NotificationManager.warning('Réinitialisation des mappings...', 3000);
     
     setTimeout(() => {
         document.querySelectorAll('select[id^="mapping-"]').forEach(select => {

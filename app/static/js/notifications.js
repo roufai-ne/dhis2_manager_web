@@ -135,6 +135,13 @@ const NotificationManager = {
 
         // Close event handler
         const closeHandler = () => {
+            // Clear timeout if exists
+            if (notification.dataset.timeoutId) {
+                clearTimeout(Number(notification.dataset.timeoutId));
+                delete notification.dataset.timeoutId;
+            }
+            // Remove listener to avoid memory leaks
+            notification.removeEventListener('close', closeHandler);
             this.hide(notification);
         };
         notification.addEventListener('close', closeHandler);
@@ -142,9 +149,11 @@ const NotificationManager = {
         // Auto remove
         if (duration > 0) {
             const timeoutId = setTimeout(() => {
+                // Remove listener before closing
+                notification.removeEventListener('close', closeHandler);
                 this.hide(notification);
             }, duration);
-            // Store timeout ID to clear it if manually closed (optional but good practice)
+            // Store timeout ID to clear it if manually closed
             notification.dataset.timeoutId = timeoutId;
         }
 
@@ -152,9 +161,10 @@ const NotificationManager = {
     },
 
     hide(notification) {
-        // Clear timeout if exists customization
+        // Clear timeout if exists
         if (notification.dataset.timeoutId) {
             clearTimeout(Number(notification.dataset.timeoutId));
+            delete notification.dataset.timeoutId;
         }
 
         notification.style.transform = 'translateX(400px)';
