@@ -859,6 +859,12 @@ function handleProcessResult(data) {
 
         setStep(2, 'completed');
         setStep(3, 'active');
+        
+        // Notification de succès avec les statistiques
+        NotificationManager.success(`✅ Traitement terminé : ${data.total_values} valeur(s) générée(s) avec succès`, 5000);
+        if (data.stats.errors > 0) {
+            NotificationManager.warning(`⚠️ ${data.stats.errors} erreur(s) détectée(s) - consultez les détails ci-dessous`, 6000);
+        }
 
         // Scroll to results
         document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
@@ -970,22 +976,57 @@ function sendToDhis2() {
         })
             .then(r => r.json())
             .then(data => {
+                LoadingOverlay.hide();
+                
                 if (data.success) {
                     NotificationManager.success(data.message, 5000);
-                    // Show details if available
-                    if (data.details && data.details.importCount) {
-                        const counts = data.details.importCount;
-                        NotificationManager.info(
-                            `📊 Détails de l'import - Importés: ${counts.imported} | Mis à jour: ${counts.updated} | Ignorés: ${counts.ignored} | Supprimés: ${counts.deleted}`,
-                            8000
-                        );
+                    
+                    // Show details if available - Support multiple response structures
+                    if (data.details) {
+                        const details = data.details;
+                        
+                        // Structure DHIS2 standard: importCount
+                        if (details.importCount) {
+                            const counts = details.importCount;
+                            const total = (counts.imported || 0) + (counts.updated || 0);
+                            NotificationManager.info(
+                                `📊 Import DHIS2 - Total: ${total} | Importés: ${counts.imported || 0} | Mis à jour: ${counts.updated || 0} | Ignorés: ${counts.ignored || 0} | Supprimés: ${counts.deleted || 0}`,
+                                10000
+                            );
+                        }
+                        // Structure alternative: status
+                        else if (details.status) {
+                            const status = details.status;
+                            const description = details.description || 'Import terminé';
+                            NotificationManager.info(`📊 Statut DHIS2: ${status} - ${description}`, 8000);
+                            
+                            // Si des conflits ou détails supplémentaires
+                            if (details.conflicts && details.conflicts.length > 0) {
+                                const conflictCount = details.conflicts.length;
+                                NotificationManager.warning(`⚠️ ${conflictCount} conflit(s) détecté(s) lors de l'import`, 8000);
+                            }
+                        }
+                        // Affichage générique si structure inconnue
+                        else {
+                            console.log('Détails de la réponse DHIS2:', details);
+                            NotificationManager.info('✅ Import terminé - Consultez la console pour les détails', 6000);
+                        }
                     }
                 } else {
                     NotificationManager.error(data.error || 'Erreur lors de l\'envoi', 6000);
+                    
+                    // Afficher les détails de l'erreur si disponibles
+                    if (data.details && typeof data.details === 'object') {
+                        console.error('Détails de l\'erreur DHIS2:', data.details);
+                        const errorMsg = data.details.message || data.details.description || 'Consultez la console pour plus de détails';
+                        NotificationManager.error(`Erreur détaillée: ${errorMsg}`, 8000);
+                    }
                 }
             })
-            .catch(e => NotificationManager.error('Erreur réseau: ' + (e.message || e), 6000))
-            .finally(() => LoadingOverlay.hide());
+            .catch(e => {
+                LoadingOverlay.hide();
+                NotificationManager.error('Erreur réseau: ' + (e.message || e), 6000);
+            });
     }, 100);
 }
 
@@ -1957,17 +1998,17 @@ document.getElementById('auto-col-de')?.addEventListener('change', async functio
                     const sugData = await sugResp.json();
                     if (sugData.success && sugData.suggestions && sugData.suggestions.data_elements) {
                         suggestions = sugData.suggestions.data_elements;
-
-                        // Afficher un petit toast récapitulatif
-                        const count = Object.keys(suggestions).length;
-                        if (count > 0) {
-                            NotificationManager.success(`${count} suggestions trouvées automatiquement`);
-                        }
                     }
                 } catch (e) {
                     console.warn("Erreur suggestions:", e);
                 } finally {
                     LoadingOverlay.hide();
+                    
+                    // Afficher un petit toast récapitulatif APRÈS la fermeture du loading
+                    const count = Object.keys(suggestions).length;
+                    if (count > 0) {
+                        NotificationManager.success(`🤖 ${count} suggestion(s) de mapping trouvée(s) automatiquement`, 5000);
+                    }
                 }
 
                 // Remplir les Data Elements avec suggestions
@@ -2020,11 +2061,16 @@ function autoMapOrganisationsByCode() {
 
     // Afficher un message sur les mappings automatiques
     if (mappedCount > 0) {
-        NotificationManager.success(`${mappedCount} établissement(s) mappé(s) automatiquement par code`);
+        NotificationManager.success(`✅ ${mappedCount} établissement(s) mappé(s) automatiquement par code`, 5000);
     }
 
     if (unmappedTCD.length > 0) {
-        NotificationManager.warning(`${unmappedTCD.length} établissement(s) nécessitent un mapping manuel`);
+        NotificationManager.warning(`⚠️ ${unmappedTCD.length} établissement(s) nécessitent un mapping manuel`, 6000);
+    }
+    
+    // Si tous sont mappés, afficher une notification supplémentaire
+    if (mappedCount > 0 && unmappedTCD.length === 0) {
+        NotificationManager.info(`🎉 Tous les établissements ont été mappés automatiquement !`, 4000);
     }
 }
 
