@@ -124,6 +124,55 @@ def upload_excel():
         return jsonify({'error': f'Erreur serveur: {str(e)}'}), 500
 
 
+@bp.route('/api/extract-template-year', methods=['POST'])
+def extract_template_year():
+    """
+    Extrait l'année du template depuis le fichier Excel
+    
+    Body JSON:
+        {
+            "sheet_name": "Données"  # Onglet à analyser
+        }
+        
+    Returns:
+        JSON avec l'année extraite
+    """
+    if 'excel_file' not in session:
+        return jsonify({'error': 'Aucun fichier uploadé'}), 400
+        
+    try:
+        data = request.get_json() or {}
+        sheet_name = data.get('sheet_name', 'Données')
+        
+        filepath = session['excel_file']
+        
+        from app.services.data_calculator import DataCalculator
+        
+        # Créer un calculateur temporaire juste pour l'extraction
+        metadata = get_metadata_from_session()
+        calculator = DataCalculator(metadata)
+        
+        # Extraire l'année
+        year = calculator.extract_template_year(filepath, sheet_name)
+        
+        if year:
+            logger.info(f"Année extraite du template: {year}")
+            return jsonify({
+                'success': True,
+                'year': year,
+                'sheet_name': sheet_name
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Année non détectable dans le template'
+            })
+            
+    except Exception as e:
+        logger.error(f"Erreur extraction année: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @bp.route('/api/get-sheets', methods=['GET'])
 def get_excel_sheets():
     """
@@ -950,12 +999,24 @@ def upload_template():
                     if de_name not in sections_de[section]:
                         sections_de[section].append(de_name)
         
+        # Extraire l'année du template (depuis la colonne period)
+        year_extracted = None
+        try:
+            from app.services.data_calculator import DataCalculator
+            metadata = get_metadata_from_session()
+            calculator = DataCalculator(metadata)
+            year_extracted = calculator.extract_template_year(str(filepath), sheet_name='Données')
+        except Exception as e:
+            logger.warning(f"Impossible d'extraire l'année du template: {e}")
+        
         # Sauvegarder en session
         session['template_orgs'] = organisations_uniques
         session['template_orgs_codes'] = organisations_avec_codes
         session['template_sections_de'] = sections_de
+        if year_extracted:
+            session['template_year'] = year_extracted
         
-        logger.info(f"Template uploadé: {filename}, {len(organisations_uniques)} organisations, {len(sections_de)} sections trouvées")
+        logger.info(f"Template uploadé: {filename}, {len(organisations_uniques)} organisations, {len(sections_de)} sections trouvées, année: {year_extracted}")
         
         return jsonify({
             'success': True,
@@ -965,7 +1026,8 @@ def upload_template():
             'orgs': len(organisations_uniques),
             'organisations_uniques': organisations_uniques,
             'organisations_avec_codes': organisations_avec_codes,
-            'sections_de': sections_de
+            'sections_de': sections_de,
+            'year': year_extracted
         }), 200
         
     except Exception as e:

@@ -81,7 +81,6 @@ function updateCalculatorPeriodOptions(typeSelectId, periodSelectId) {
 
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize Period Dropdowns
-    updateCalculatorPeriodOptions('pivot-period-type', 'pivot-period');
     updateCalculatorPeriodOptions('auto-period-type', 'auto-period');
 
     initializeDropzone();
@@ -95,11 +94,19 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('template-upload-section').classList.add('hidden');
             document.getElementById('auto-sections').classList.add('hidden');
 
+            // Toggle instructions
+            const instructionsTemplate = document.getElementById('instructions-template');
+            const instructionsAuto = document.getElementById('instructions-auto');
+
             // Show selected section
             if (this.value === 'template') {
                 document.getElementById('template-upload-section').classList.remove('hidden');
+                if (instructionsTemplate) instructionsTemplate.classList.remove('hidden');
+                if (instructionsAuto) instructionsAuto.classList.add('hidden');
             } else if (this.value === 'auto') {
                 document.getElementById('auto-sections').classList.remove('hidden');
+                if (instructionsTemplate) instructionsTemplate.classList.add('hidden');
+                if (instructionsAuto) instructionsAuto.classList.remove('hidden');
             }
         });
     });
@@ -108,6 +115,14 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btn-process').addEventListener('click', processFile);
     document.getElementById('btn-process-mapping').addEventListener('click', processFile);
     document.getElementById('btn-new-calculation').addEventListener('click', () => window.location.reload());
+    
+    // Event listener pour le changement d'onglet
+    const sheetSelect = document.getElementById('select-sheet');
+    if (sheetSelect) {
+        sheetSelect.addEventListener('change', function() {
+            extractAndFillTemplateYear(this.value);
+        });
+    }
 
     // JSON Preview/Download buttons
     document.getElementById('btn-preview-json').addEventListener('click', previewJson);
@@ -122,21 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnSend = document.getElementById('btn-send-dhis2');
     if (btnSend) btnSend.addEventListener('click', sendToDhis2);
 
-    // AI Analysis
-    document.getElementById('btn-analyze-ai').addEventListener('click', analyzeWithAI);
 
-    // Data type selection event listeners
-    document.querySelectorAll('input[name="data-type"]').forEach(radio => {
-        radio.addEventListener('change', function () {
-            const pivotOptions = document.getElementById('pivot-options');
-            if (this.value === 'pivot') {
-                pivotOptions.classList.remove('hidden');
-                loadDataElements();
-            } else {
-                pivotOptions.classList.add('hidden');
-            }
-        });
-    });
 
     // Load datasets
     fetch('/configuration/api/datasets')
@@ -280,7 +281,6 @@ function initializeDropzone() {
                 if (response.success) {
                     document.getElementById('mapping-filename').textContent = response.filename;
                     document.getElementById('mapping-file-info').classList.remove('hidden');
-                    document.getElementById('ai-analysis-section').classList.remove('hidden'); // Show AI button
                     NotificationManager.success('Fichier chargé avec succès');
 
                     // Charger les onglets pour le mode mapping (qui chargera ensuite les colonnes)
@@ -297,192 +297,7 @@ function initializeDropzone() {
     });
 }
 
-function analyzeWithAI() {
-    if (!mappingDropzone.files || mappingDropzone.files.length === 0) {
-        NotificationManager.error('Veuillez d\'abord charger un fichier Excel');
-        return;
-    }
 
-    const file = mappingDropzone.files[0];
-    const formData = new FormData();
-    formData.append('file', file);
-
-    LoadingOverlay.show('Analyse IA en cours...');
-
-    // D'abord essayer de détecter le format pivoté
-    fetch('/calculator/api/extract-pivoted-data-elements', {
-        method: 'POST',
-        body: formData
-    })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.format === 'pivoted' && data.statistics.matched_with_dhis2 > 0) {
-                // Format pivoté détecté avec des matches
-                LoadingOverlay.hide();
-                showPivotedMappingInterface(data);
-
-                const colsList = data.data_element_columns.join(', ');
-                NotificationManager.success(
-                    `✓ Format pivoté détecté!\n` +
-                    `${data.statistics.matched_with_dhis2} DE auto-matchés, ${data.statistics.unmatched} à mapper.\n` +
-                    `Colonnes DE: ${colsList}`
-                );
-            } else {
-                // Format classique, utiliser l'analyse normale
-                return fetch('/calculator/api/analyze-file', {
-                    method: 'POST',
-                    body: formData
-                });
-            }
-        })
-        .then(r => r ? r.json() : null)
-        .then(data => {
-            if (data) {
-                if (data.success) {
-                    applyAISuggestions(data);
-                    NotificationManager.success('Analyse terminée ! Configuration appliquée.');
-                } else {
-                    NotificationManager.error(data.error || 'Erreur lors de l\'analyse');
-                }
-            }
-        })
-        .catch(e => NotificationManager.error('Erreur réseau: ' + e.message))
-        .finally(() => LoadingOverlay.hide());
-}
-
-function applyAISuggestions(data) {
-    console.log('AI Analysis Result:', data);
-
-    // Show AI result badge with confidence color
-    const badge = document.getElementById('ai-result-badge');
-    badge.classList.remove('hidden');
-
-    const confidence = Math.round(data.confidence * 100);
-    document.getElementById('ai-confidence').textContent = confidence;
-
-    // Color code based on confidence
-    const badgeElement = badge.querySelector('span');
-    if (confidence >= 80) {
-        badgeElement.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
-    } else if (confidence >= 60) {
-        badgeElement.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800';
-    } else {
-        badgeElement.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800';
-    }
-
-    // Show reasoning
-    let reasoningHtml = `<strong>Analyse:</strong> ${data.reasoning}`;
-
-    // Show warnings if any
-    if (data.warnings && data.warnings.length > 0) {
-        reasoningHtml += `<br><br><strong class="text-orange-600">⚠️ Avertissements:</strong><ul class="list-disc ml-5 mt-1">`;
-        data.warnings.forEach(w => {
-            reasoningHtml += `<li>${w}</li>`;
-        });
-        reasoningHtml += `</ul>`;
-    }
-
-    document.getElementById('ai-reasoning').innerHTML = reasoningHtml;
-
-    // Show mapping configuration section
-    document.getElementById('mapping-config').classList.remove('hidden');
-
-    // Set Processing Mode
-    const modeRadio = document.querySelector(`input[name="processing-mode-mapping"][value="${data.processing_mode}"]`);
-    if (modeRadio) {
-        modeRadio.checked = true;
-        console.log(`Set processing mode to: ${data.processing_mode}`);
-    }
-
-    // Apply Column Mappings
-    if (data.mapping) {
-        const m = data.mapping;
-        console.log('Applying mappings:', m);
-
-        // Org Unit
-        if (m.org_unit) {
-            const orgModeRadio = document.querySelector('input[name="org-mode"][value="column"]');
-            if (orgModeRadio) {
-                orgModeRadio.checked = true;
-                toggleOrgMode();
-                setTimeout(() => {
-                    setSelectValue('map-org', m.org_unit);
-                    console.log(`Mapped org_unit to column: ${m.org_unit}`);
-                }, 100);
-            }
-        }
-
-        // Period - Try to extract from data if it's a column
-        if (m.period) {
-            console.log(`Period column detected: ${m.period} (manual mapping may be required)`);
-            NotificationManager.info(`Période détectée dans la colonne "${m.period}". Vérifiez le format dans les données.`);
-        }
-
-        // Data Element
-        if (m.data_element) {
-            setTimeout(() => {
-                const deSelect = document.getElementById('map-data-element');
-                if (deSelect) {
-                    setSelectValue('map-data-element', m.data_element);
-                    console.log(`Mapped data_element to column: ${m.data_element}`);
-                }
-            }, 100);
-        }
-
-        // Value Column (for values mode)
-        if (data.processing_mode === 'values' && m.value) {
-            setTimeout(() => {
-                const valueSelect = document.getElementById('map-value-column');
-                if (valueSelect) {
-                    setSelectValue('map-value-column', m.value);
-                    console.log(`Mapped value to column: ${m.value}`);
-                }
-            }, 100);
-        }
-
-        // Categories - Apply to category mapping dropdowns
-        if (m.categories && Array.isArray(m.categories) && m.categories.length > 0) {
-            setTimeout(() => {
-                const catMappings = document.querySelectorAll('.category-mapping');
-                m.categories.forEach((catCol, idx) => {
-                    if (catMappings[idx]) {
-                        setSelectValue(catMappings[idx].id, catCol);
-                        console.log(`Mapped category ${idx} to column: ${catCol}`);
-                    }
-                });
-
-                if (m.categories.length > 0) {
-                    NotificationManager.info(`${m.categories.length} catégorie(s) détectée(s): ${m.categories.join(', ')}`);
-                }
-            }, 200);
-        }
-    }
-
-    // Show success message with confidence level
-    if (confidence >= 80) {
-        NotificationManager.success(`Analyse IA complète! Confiance élevée (${confidence}%). Vérifiez les mappings suggérés.`);
-    } else if (confidence >= 60) {
-        NotificationManager.warning(`Analyse IA terminée avec confiance moyenne (${confidence}%). Vérifiez attentivement les mappings.`);
-    } else {
-        NotificationManager.warning(`Analyse IA terminée mais confiance faible (${confidence}%). Corrigez manuellement les mappings.`);
-    }
-
-    // Scroll to config
-    document.getElementById('mapping-config').scrollIntoView({ behavior: 'smooth' });
-}
-
-function setSelectValue(selectId, value) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
-
-    // Find option with text matching value (fuzzy match?)
-    for (let i = 0; i < select.options.length; i++) {
-        if (select.options[i].text === value) {
-            select.selectedIndex = i;
-            return;
-        }
-    }
-}
 
 function onDatasetChange() {
     const datasetId = document.getElementById('mapping-dataset').value;
@@ -697,29 +512,10 @@ function processTemplate() {
 
     // Récupérer les paramètres
     const sheetName = document.getElementById('select-sheet')?.value || 'Données';
-    const mode = document.querySelector('input[name="data-type"]:checked')?.value || 'normal';
 
     const payload = {
         sheet_name: sheetName,
-        mode: mode
-    };
-
-    // Mode pivot/TCD
-    if (mode === 'pivot') {
-        // Période (requise)
-        const period = document.getElementById('pivot-period')?.value?.trim();
-        if (!period) {
-            LoadingOverlay.hide();
-            NotificationManager.error('Veuillez entrer une période pour le mode tableau croisé');
-            return;
-        }
-        payload.period = period;
-
-        // Data Element (optionnel - auto-détection si vide)
-        const deId = document.getElementById('pivot-data-element')?.value;
-        if (deId) {
-            payload.data_element_id = deId;
-        }
+        mode: 'normal'
         // Si vide, les DE seront auto-détectés depuis la première colonne
     }
 
@@ -869,7 +665,20 @@ function handleProcessResult(data) {
         // Scroll to results
         document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
     } else {
-        NotificationManager.error(data.error || 'Erreur inconnue');
+        // Gestion spécifique pour les erreurs de période/année
+        if (data.template_year && data.requested_year) {
+            NotificationManager.error(
+                `🗓️ ${data.error}`,
+                10000
+            );
+            NotificationManager.warning(
+                `💡 Solution : Utilisez la période ${data.template_year} ou générez un nouveau template pour ${data.requested_year}`,
+                10000
+            );
+        } else {
+            NotificationManager.error(data.error || 'Erreur inconnue', 7000);
+        }
+        
         if (data.details) {
             displayValidationErrors(data.details);
         }
@@ -978,14 +787,17 @@ function sendToDhis2() {
             .then(data => {
                 LoadingOverlay.hide();
                 
+                console.log('Réponse complète de send-to-dhis2:', data);
+                
                 if (data.success) {
                     NotificationManager.success(data.message, 5000);
                     
                     // Show details if available - Support multiple response structures
                     if (data.details) {
                         const details = data.details;
+                        console.log('Détails DHIS2:', details);
                         
-                        // Structure DHIS2 standard: importCount
+                        // Structure 1: importCount directement
                         if (details.importCount) {
                             const counts = details.importCount;
                             const total = (counts.imported || 0) + (counts.updated || 0);
@@ -994,11 +806,45 @@ function sendToDhis2() {
                                 10000
                             );
                         }
-                        // Structure alternative: status
+                        // Structure 2: importSummaries (ancien format DHIS2)
+                        else if (details.importSummaries && details.importSummaries.length > 0) {
+                            const summary = details.importSummaries[0];
+                            if (summary.importCount) {
+                                const counts = summary.importCount;
+                                const total = (counts.imported || 0) + (counts.updated || 0);
+                                NotificationManager.info(
+                                    `📊 Import DHIS2 - Total: ${total} | Importés: ${counts.imported || 0} | Mis à jour: ${counts.updated || 0} | Ignorés: ${counts.ignored || 0} | Supprimés: ${counts.deleted || 0}`,
+                                    10000
+                                );
+                            }
+                        }
+                        // Structure 3: response avec importOptions (DHIS2 2.36+)
+                        else if (details.response && details.response.importCount) {
+                            const counts = details.response.importCount;
+                            const total = (counts.imported || 0) + (counts.updated || 0);
+                            NotificationManager.info(
+                                `📊 Import DHIS2 - Total: ${total} | Importés: ${counts.imported || 0} | Mis à jour: ${counts.updated || 0} | Ignorés: ${counts.ignored || 0} | Supprimés: ${counts.deleted || 0}`,
+                                10000
+                            );
+                        }
+                        // Structure 4: status simple
                         else if (details.status) {
                             const status = details.status;
                             const description = details.description || 'Import terminé';
                             NotificationManager.info(`📊 Statut DHIS2: ${status} - ${description}`, 8000);
+                            
+                            // Tenter d'extraire des chiffres si disponibles
+                            if (details.imported !== undefined || details.updated !== undefined) {
+                                const imported = details.imported || 0;
+                                const updated = details.updated || 0;
+                                const ignored = details.ignored || 0;
+                                const deleted = details.deleted || 0;
+                                const total = imported + updated;
+                                NotificationManager.info(
+                                    `📊 Détails - Total: ${total} | Importés: ${imported} | Mis à jour: ${updated} | Ignorés: ${ignored} | Supprimés: ${deleted}`,
+                                    10000
+                                );
+                            }
                             
                             // Si des conflits ou détails supplémentaires
                             if (details.conflicts && details.conflicts.length > 0) {
@@ -1008,9 +854,11 @@ function sendToDhis2() {
                         }
                         // Affichage générique si structure inconnue
                         else {
-                            console.log('Détails de la réponse DHIS2:', details);
-                            NotificationManager.info('✅ Import terminé - Consultez la console pour les détails', 6000);
+                            console.warn('Structure de réponse DHIS2 non reconnue:', details);
+                            NotificationManager.info('✅ Import terminé - Consultez la console (F12) pour les détails complets', 8000);
                         }
+                    } else {
+                        console.warn('Pas de détails dans la réponse');
                     }
                 } else {
                     NotificationManager.error(data.error || 'Erreur lors de l\'envoi', 6000);
@@ -1025,6 +873,7 @@ function sendToDhis2() {
             })
             .catch(e => {
                 LoadingOverlay.hide();
+                console.error('Erreur lors de l\'envoi à DHIS2:', e);
                 NotificationManager.error('Erreur réseau: ' + (e.message || e), 6000);
             });
     }, 100);
@@ -1057,9 +906,98 @@ async function loadExcelSheets() {
             }
 
             console.log(`Onglets chargés: ${data.sheets.join(', ')}`);
+            
+            // Extraire automatiquement l'année du template
+            await extractAndFillTemplateYear(data.sheets[0]);
         }
     } catch (error) {
         console.error('Erreur chargement onglets:', error);
+    }
+}
+
+// Extraire l'année du template et pré-remplir les champs de période
+async function extractAndFillTemplateYear(sheetName) {
+    try {
+        const response = await fetch('/calculator/api/extract-template-year', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sheet_name: sheetName })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.year) {
+            const year = data.year;
+            console.log(`Année du template détectée: ${year}`);
+            
+            // Fonction pour pré-remplir et verrouiller un champ de période
+            const fillAndLockPeriod = (fieldId, periodTypeId = null) => {
+                const field = document.getElementById(fieldId);
+                if (!field) return;
+                
+                // Si c'est un select (auto-period)
+                if (field.tagName === 'SELECT') {
+                    // Vérifier si l'année existe dans les options
+                    let optionExists = false;
+                    for (let option of field.options) {
+                        if (option.value === year) {
+                            field.value = year;
+                            optionExists = true;
+                            break;
+                        }
+                    }
+                    
+                    // Si l'année n'existe pas, ajouter une option et la sélectionner
+                    if (!optionExists) {
+                        const newOption = document.createElement('option');
+                        newOption.value = year;
+                        newOption.textContent = year;
+                        newOption.selected = true;
+                        field.insertBefore(newOption, field.firstChild);
+                    }
+                    
+                    // Désactiver le champ et le type de période associé
+                    field.disabled = true;
+                    field.style.backgroundColor = '#f3f4f6';
+                    field.style.cursor = 'not-allowed';
+                    field.title = `Année auto-détectée depuis le template: ${year}`;
+                    
+                    // Désactiver aussi le type de période si fourni
+                    if (periodTypeId) {
+                        const typeField = document.getElementById(periodTypeId);
+                        if (typeField) {
+                            typeField.disabled = true;
+                            typeField.style.backgroundColor = '#f3f4f6';
+                            typeField.style.cursor = 'not-allowed';
+                            typeField.title = 'Type de période verrouillé (Annuel détecté)';
+                            // S'assurer que "Yearly" est sélectionné
+                            typeField.value = 'Yearly';
+                        }
+                    }
+                }
+                // Si c'est un input text (mapping-period, tcd-period)
+                else {
+                    field.value = year;
+                    field.setAttribute('readonly', 'true');
+                    field.style.backgroundColor = '#f3f4f6';
+                    field.style.cursor = 'not-allowed';
+                    field.title = `Année auto-détectée depuis le template: ${year}`;
+                }
+            };
+            
+            // Appliquer à tous les champs de période
+            fillAndLockPeriod('auto-period', 'auto-period-type');
+            fillAndLockPeriod('mapping-period');
+            fillAndLockPeriod('tcd-period');
+            
+            // Notification discrète
+            NotificationManager.info(`📅 Année du template: ${year} (champs période verrouillés)`, 4000);
+        } else {
+            console.warn('Année du template non détectable');
+        }
+    } catch (error) {
+        console.error('Erreur extraction année:', error);
+        // Ne pas bloquer l'interface si l'extraction échoue
     }
 }
 
@@ -1093,31 +1031,6 @@ async function loadMappingSheets() {
         }
     } catch (error) {
         console.error('Erreur chargement onglets mapping:', error);
-    }
-}
-
-// Load data elements for pivot mode
-async function loadDataElements() {
-    try {
-        // Get data elements from the calculator API
-        const response = await fetch(window.CalculatorConfig.getDhis2DeUrl);
-        const data = await response.json();
-
-        if (data.success && data.data_elements) {
-            const select = document.getElementById('pivot-data-element');
-            select.innerHTML = '<option value="">-- Sélectionnez un Data Element --</option>';
-
-            data.data_elements.forEach(de => {
-                const option = document.createElement('option');
-                option.value = de.id;
-                option.textContent = de.name;
-                select.appendChild(option);
-            });
-
-            console.log(`${data.count} data elements chargés`);
-        }
-    } catch (error) {
-        console.error('Erreur chargement data elements:', error);
     }
 }
 
@@ -1760,6 +1673,32 @@ document.getElementById('auto-template-input')?.addEventListener('change', async
             document.getElementById('auto-template-filename').textContent = file.name;
             document.getElementById('auto-template-rows').textContent = result.rows || '...';
             document.getElementById('auto-template-orgs').textContent = result.orgs || '...';
+
+            // Pré-remplir l'année si détectée dans le template
+            if (result.year) {
+                const autoPeriodField = document.getElementById('auto-period');
+                const autoPeriodTypeField = document.getElementById('auto-period-type');
+                
+                if (autoPeriodField && autoPeriodTypeField) {
+                    // S'assurer que le type est Yearly
+                    autoPeriodTypeField.value = 'Yearly';
+                    // Régénérer les options de période
+                    updateCalculatorPeriodOptions('auto-period-type', 'auto-period');
+                    // Sélectionner l'année extraite
+                    autoPeriodField.value = result.year;
+                    // Désactiver les champs
+                    autoPeriodField.disabled = true;
+                    autoPeriodTypeField.disabled = true;
+                    autoPeriodField.style.backgroundColor = '#f3f4f6';
+                    autoPeriodTypeField.style.backgroundColor = '#f3f4f6';
+                    autoPeriodField.style.cursor = 'not-allowed';
+                    autoPeriodTypeField.style.cursor = 'not-allowed';
+                    autoPeriodField.title = `Année auto-détectée depuis le template: ${result.year}`;
+                    autoPeriodTypeField.title = 'Type de période verrouillé (Annuel détecté)';
+                    
+                    NotificationManager.info(`📅 Année du template: ${result.year} (champ période verrouillé)`, 4000);
+                }
+            }
 
             // Afficher étape 2
             document.getElementById('auto-step2').classList.remove('hidden');

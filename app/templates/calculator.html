@@ -377,156 +377,7 @@
                     </div>
                 </div>
 
-                <!-- Data Type Selection -->
-                <div id="data-type-selection" class="mt-4 pt-4 border-t border-green-200">
-                    <label class="form-label flex items-center gap-2 mb-3">
-                        <i class="fas fa-sliders-h text-purple-600"></i>
-                        <span class="font-bold">Type de données</span>
-                    </label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Mode Normal -->
-                        <label class="cursor-pointer">
-                            <input type="radio" name="data-type" value="normal" class="hidden" checked>
-                            <div
-                                class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-all data-type-card">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <i class="fas fa-file-invoice text-blue-600"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-900">Données normales</h4>
-                                        <p class="text-xs text-gray-600">Template généré</p>
-                                    </div>
-                                </div>
-                                <p class="text-sm text-gray-600">
-                                    Fichier Excel généré par le Générateur avec colonnes techniques pré-remplies.
-                                </p>
-                            </div>
-                        </label>
 
-                        <!-- Mode Tableau Croisé -->
-                        <label class="cursor-pointer">
-                            <input type="radio" name="data-type" value="pivot" class="hidden">
-                            <div
-                                class="border-2 border-gray-200 rounded-lg p-4 hover:border-purple-500 transition-all data-type-card">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                        <i class="fas fa-table text-purple-600"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-900">Tableau croisé</h4>
-                                        <p class="text-xs text-gray-600">Structures en colonnes</p>
-                                    </div>
-                                </div>
-                                <p class="text-sm text-gray-600">
-                                    Tableau avec structures en colonnes et valeurs aux intersections.
-                                </p>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Pivot Mode Options (hidden by default) -->
-                    <div id="pivot-options" class="hidden mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                        <div class="flex items-start gap-3 mb-4">
-                            <i class="fas fa-magic text-purple-600 mt-1 text-xl"></i>
-                            <div class="flex-1">
-                                <h4 class="font-bold text-gray-900 mb-1 flex items-center gap-2">
-                                    Mode Tableau Croisé Dynamique (TCD)
-                                    <span
-                                        class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">Auto-détection
-                                        ✨</span>
-                                </h4>
-                                <p class="text-sm text-gray-700 mb-2">
-                                    Les <strong>data elements sont automatiquement détectés</strong> depuis la première
-                                    colonne de votre fichier.
-                                </p>
-                                <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
-                                    <li><strong>Première colonne</strong> = noms des indicateurs/data elements (détectés
-                                        automatiquement)</li>
-                                    <li><strong>Autres colonnes</strong> = noms ou codes des organisations</li>
-                                    <li><strong>Valeurs</strong> = données numériques aux intersections</li>
-                                </ul>
-                                <div class="mt-3 bg-white border border-purple-200 rounded-lg p-3">
-                                    <p class="text-xs text-gray-600 mb-1"><i
-                                            class="fas fa-lightbulb text-yellow-500 mr-1"></i><strong>Exemple de format
-                                            :</strong></p>
-                                    <pre class="text-xs text-gray-700 font-mono">Indicateur          │ USSGB │ USTB │ UMN
-────────────────────┼───────┼──────┼─────
-Effectif Licence    │  450  │  320 │ 280
-Effectif Master     │   85  │   62 │  58
-Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Period Type -->
-                        <div class="form-group mb-4">
-                            <label for="pivot-period-type" class="form-label required">Type de Période</label>
-                            <div class="relative">
-                                <select id="pivot-period-type"
-                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm py-3 px-4 bg-white transition-colors font-medium border"
-                                    onchange="updateCalculatorPeriodOptions('pivot-period-type', 'pivot-period')">
-                                    <option value="Monthly">Mensuel</option>
-                                    <option value="Quarterly">Trimestriel</option>
-                                    <option value="SixMonthly">Semestriel</option>
-                                    <option value="Yearly" selected>Annuel</option>
-                                    <option value="FinancialYear">Année Financière</option>
-                                </select>
-                                <div
-                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                    <i class="fas fa-chevron-down text-xs mr-2"></i>
-                                </div>
-                            </div>
-                        </div>
-
-                        <label for="pivot-period" class="form-label required">
-                            <i class="fas fa-calendar mr-2"></i>Période
-                        </label>
-                        <div class="relative">
-                            <select id="pivot-period"
-                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm py-3 px-4 bg-white transition-colors font-medium border">
-                                <!-- Populated by JS -->
-                            </select>
-                            <div
-                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                <i class="fas fa-chevron-down text-xs mr-2"></i>
-                            </div>
-                        </div>
-                        <!-- Removed help text as dropdown is self-explanatory -->
-
-                        <!-- Data Element (Optional) -->
-                        <div class="form-group">
-                            <label for="pivot-data-element" class="form-label">
-                                <i class="fas fa-chart-bar mr-2"></i>Data Element fixe <span
-                                    class="text-gray-500 font-normal">(optionnel)</span>
-                            </label>
-                            <select id="pivot-data-element" class="form-input">
-                                <option value="">-- Auto-détection depuis le fichier --</option>
-                                <!-- Options chargées dynamiquement -->
-                            </select>
-                            <p class="text-sm text-gray-600 mt-2">
-                                <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-                                <strong>Laisser vide</strong> pour détecter automatiquement les data elements depuis la
-                                première colonne.<br>
-                                Sélectionner un DE uniquement si toutes les lignes utilisent le même indicateur.
-                            </p>
-                        </div>
-
-                        <!-- Help Section -->
-                        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <div class="flex items-start gap-2">
-                                <i class="fas fa-question-circle text-blue-600 mt-0.5"></i>
-                                <div class="text-sm text-blue-800">
-                                    <strong>Besoin d'aide ?</strong> Consultez la
-                                    <a href="#" class="underline hover:text-blue-900"
-                                        onclick="NotificationManager.info('Documentation TCD multi-DE disponible dans MODE_TCD_MULTI_DE.md', 5000); return false;">documentation
-                                        du mode TCD</a>
-                                    pour plus d'exemples.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Process Button -->
                 <div class="mt-6 flex justify-end">
@@ -839,7 +690,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         </div>
     </div>
 
-    <!-- OLD TCD-TEMP: placeholder (sera supprimé après) -->
+    <!-- Mapping Mode Sections (TCD-TEMP) -->
     <div id="tcd-sections-temp" class="hidden">
         <!-- Dataset Selection -->
         <div class="card mb-8">
@@ -924,31 +775,7 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             </div>
         </div>
 
-        <!-- AI Analysis Button -->
-        <div id="ai-analysis-section" class="card mb-8 hidden">
-            <div
-                class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl p-6 flex items-center justify-between">
-                <div>
-                    <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
-                        <i class="fas fa-magic"></i>
-                        Assistant IA
-                    </h3>
-                    <p class="text-purple-100">Laissez l'IA analyser votre fichier et configurer le mapping
-                        automatiquement.</p>
-                </div>
-                <button id="btn-analyze-ai" class="btn bg-white text-purple-600 hover:bg-purple-50 border-none">
-                    <i class="fas fa-sparkles mr-2"></i>Analyser avec IA
-                </button>
-            </div>
-            <div id="ai-result-badge" class="mt-4 hidden">
-                <span
-                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    Configuration suggérée (Confiance: <span id="ai-confidence"></span>%)
-                </span>
-                <p class="text-sm text-gray-600 mt-2" id="ai-reasoning"></p>
-            </div>
-        </div>
+
 
         <!-- Column Mapping -->
         <div id="mapping-config" class="card mb-8 hidden">
@@ -1527,13 +1354,13 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
         </div>
     </div>
 
-    <!-- Instructions -->
-    <div class="card bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+    <!-- Instructions - Mode Template -->
+    <div id="instructions-template" class="card bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
         <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                 <i class="fas fa-info-circle text-white"></i>
             </div>
-            Instructions
+            Instructions - Mode Template
         </h3>
         <ul class="space-y-3 text-gray-700">
             <li class="flex items-start gap-3">
@@ -1547,7 +1374,43 @@ Taux de réussite    │ 85.5  │ 90.2 │ 87.8</pre>
             </li>
             <li class="flex items-start gap-3">
                 <i class="fas fa-check text-blue-600 text-lg flex-shrink-0"></i>
+                <span>L'année sera <strong>automatiquement détectée</strong> depuis le template</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fas fa-check text-blue-600 text-lg flex-shrink-0"></i>
                 <span>Le fichier JSON généré peut être importé directement dans DHIS2</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Instructions - Mode Automatique -->
+    <div id="instructions-auto" class="card bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 hidden">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-info-circle text-white"></i>
+            </div>
+            Instructions - Mode Automatique
+        </h3>
+        <ul class="space-y-3 text-gray-700">
+            <li class="flex items-start gap-3">
+                <i class="fas fa-check text-emerald-600 text-lg flex-shrink-0"></i>
+                <span><strong>Étape 1:</strong> Sélectionnez votre template DHIS2 généré (l'année sera détectée automatiquement)</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fas fa-check text-emerald-600 text-lg flex-shrink-0"></i>
+                <span><strong>Étape 2:</strong> Uploadez votre fichier TCD (Tableau Croisé Dynamique) au format Excel</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fas fa-check text-emerald-600 text-lg flex-shrink-0"></i>
+                <span><strong>Étape 3:</strong> Configurez les colonnes (Data Elements, Catégories, Code Établissement)</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fas fa-check text-emerald-600 text-lg flex-shrink-0"></i>
+                <span><strong>Étape 4:</strong> Mappez les établissements et Data Elements entre TCD et Template</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fas fa-check text-emerald-600 text-lg flex-shrink-0"></i>
+                <span>Les données seront automatiquement insérées dans le template et prêtes pour DHIS2</span>
             </li>
         </ul>
     </div>

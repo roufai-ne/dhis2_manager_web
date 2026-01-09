@@ -48,6 +48,58 @@ class DataCalculator:
             logger.error(f"Erreur lecture onglets: {e}")
             raise ValueError(f"Impossible de lire les onglets: {str(e)}")
 
+    def extract_template_year(self, filepath: str, sheet_name: str) -> Optional[str]:
+        """
+        Extrait l'année du template depuis la colonne 'period' (mode normal)
+        ou retourne None si non détectable
+        
+        Args:
+            filepath: Chemin du fichier Excel
+            sheet_name: Nom de l'onglet
+            
+        Returns:
+            Année sous forme de chaîne (ex: "2024") ou None
+        """
+        try:
+            # Lire le fichier avec skiprows=5 comme dans le traitement normal
+            df = pd.read_excel(filepath, sheet_name=sheet_name, skiprows=5, nrows=10)
+            
+            # Normaliser les noms de colonnes (minuscules, sans espaces)
+            df.columns = df.columns.str.lower().str.strip()
+            
+            # Chercher la colonne période (plusieurs variantes possibles)
+            period_col = None
+            for col_name in ['period', 'période', 'periode']:
+                if col_name in df.columns:
+                    period_col = col_name
+                    break
+            
+            if period_col is None:
+                logger.warning(f"Colonne 'period/période' non trouvée. Colonnes disponibles: {list(df.columns)}")
+                return None
+            
+            # Extraire la première période non vide
+            periods = df[period_col].dropna()
+            if len(periods) == 0:
+                logger.warning("Aucune période trouvée dans le template")
+                return None
+            
+            first_period = str(periods.iloc[0]).strip()
+            
+            # Extraire l'année selon différents formats
+            # Format: YYYY (yearly), YYYYMM (monthly), YYYYQX (quarterly)
+            if len(first_period) >= 4 and first_period[:4].isdigit():
+                year = first_period[:4]
+                logger.info(f"Année extraite du template: {year} (depuis colonne '{period_col}')")
+                return year
+            
+            logger.warning(f"Format de période non reconnu: {first_period}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Erreur extraction année du template: {e}")
+            return None
+
     def process_template_excel(
         self,
         filepath: str,
